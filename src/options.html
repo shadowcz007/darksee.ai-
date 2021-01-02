@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>个人知识库</title>
+ 
+</head>
+<body>
+  <header>
+   
+      <h4>个人知识库 </h4>
+      <div class="button_area">
+        <!-- <div id="load-model">模型加载ing</div> -->
+        <div id="export" class="button count">导出</div> 
+        <div id="import"class="button">导入</div>
+        <div id="restore"class="button">撤销导入</div>
+      </div>
+ 
+    
+  </header>
+
+  <div id="first-user">
+    <img src="./img/step.jpg" alt="">
+
+    <div style="display: flex;
+    flex-direction: column;justify-content: center;
+    align-items: center;">
+       <p>给你的知识库取个名字把～</p>
+      <input type="text" id="user-name">
+      <div id="start">开始使用</div>
+    </div>
+  </div>
+
+  <main class="hide">
+    <div id="selected-tags">
+      <div class="tag">最新</div>
+      <!-- <div class="button button-selected" id="updateDate">最新</div>
+      <div class="button" id="hotScore">最热</div> -->
+    </div>
+    <div id="main">
+      <div id="left"></div>
+      <div id="right">
+        <div class="pannel" data-title="默认" id="default-pannel">
+          <div class="tag tag-selected" id="updateDate">最新</div>
+          <div class="tag" id="hotScore">最热</div>
+        </div>
+  
+        <div class="pannel" data-title="知识" id="tags-for-knowledge-pannel"></div>
+        <div class="pannel" data-title="类型" id="tags-for-article-structure-pannel"></div>
+
+      </div>
+    </div>
+
+    <div id="scroll-top"></div>
+  </main>
+  <div id="data-blank" class="hide">
+    <h5>你的知识库暂时是空的噢～<br>你可以选择导入知识库，或者自己收集</h5>
+  </div>
+  <footer></footer>
+</body>
+</html>

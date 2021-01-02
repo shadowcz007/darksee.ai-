@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="./segmentit.js"></script>
+</head>
+<body>
+    <script>
+
+
+const { Segment, useDefault, cnPOSTag, enPOSTag } = Segmentit;
+
+const segmentit = useDefault(new Segment());
+
+console.log(segmentit.doSegment('一人得道，鸡犬升天').map(i => `${i.w} <${cnPOSTag(i.p)}> <${enPOSTag(i.p)}>`))
+
+    </script>
+</body>
+</html>

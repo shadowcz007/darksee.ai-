@@ -1,0 +1,5 @@
+
+.auto-knowledge-find-result::before{
+    content: attr(auto-knowledge-score);
+    
+}
