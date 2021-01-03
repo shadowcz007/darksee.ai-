@@ -49,7 +49,8 @@ npm-debug.log.*
 *.sass.d.ts
 *.scss.d.ts
 
-*/node_modules
-*/model
+lab/chrome-extension/node_modules
+lab/electron/node_modules
+bert/model
 
-*/*/node_modules
+bert/node_modules
