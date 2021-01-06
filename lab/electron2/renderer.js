@@ -1,4 +1,46 @@
+const path = require('path');
 const { ipcRenderer } = require('electron');
+
+const EditorJS = require('@editorjs/editorjs');
+
+const editor = new EditorJS({
+    /**
+     * Id of Element that should contain Editor instance
+     */
+    holder: 'container'
+});
+
+
+// (function() {
+//     const amdLoader = require("monaco-editor/min/vs/loader");
+//     const amdRequire = amdLoader.require;
+//     const amdDefine = amdLoader.require.define;
+
+
+//     function uriFromPath(_path) {
+//         var pathName = path.resolve(_path).replace(/\\/g, '/');
+//         if (pathName.length > 0 && pathName.charAt(0) !== '/') {
+//             pathName = '/' + pathName;
+//         }
+//         // console.log(pathName)
+//         return encodeURI('file://' + pathName);
+//     }
+
+//     amdRequire.config({
+//         baseUrl: uriFromPath(path.join(__dirname, 'node_modules/monaco-editor/min'))
+//     });
+//     // console.log(amdRequire)
+//     // workaround monaco-css not understanding the environment
+//     self.module = undefined;
+
+//     amdRequire(['vs/editor/editor.main'], function() {
+//         var editor = monaco.editor.create(document.getElementById('container'), {
+//             value: ['function x() {', '\tconsole.log("Hello world!");', '}'].join('\n'),
+//             language: 'javascript',
+//             theme: "vs-dark"
+//         });
+//     });
+// })();
 
 document.addEventListener('paste', async(event) => {
     var isChrome = false;
@@ -42,7 +84,3 @@ document.addEventListener('paste', async(event) => {
 function openUrl(url) {
     ipcRenderer.send('open-url', { url: url })
 }
-
-ipcRenderer.on('bert-similar-reply', (event, arg) => {
-    console.log(event, arg)
-})

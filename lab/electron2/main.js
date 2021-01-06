@@ -12,25 +12,38 @@ const bert = new Bert({
 bert.init();
 
 
-let mainWindow;
+let mainWindow, spiderWindow;
 
 ipcMain.on('open-url', (event, arg) => {
     console.log(arg) // 
-    mainWindow.loadURL(arg.url);
+    if (!spiderWindow) createSpiderWindow();
+    spiderWindow.loadURL(arg.url);
     //event.reply('asynchronous-reply', 'pong')
 });
 
-ipcMain.on('bert-similar', (event, arg) => {
-    console.log(arg.text) // 
-    let res = bert.predict(arg.text);
-    res = res.dataSync();
-    console.log(res)
-    event.reply('bert-similar-reply', res);
+ipcMain.on('bert-similar', async(event, arg) => {
+    //console.log(arg) // 
+    const { target, texts } = arg;
+
+    let res = await bert.textsRank(target, Array.from(texts, t => t.text));
+    let newTexts = [];
+    // console.log(res)
+    Array.from(res, r => {
+        console.log(r, texts)
+        newTexts.push({
+            text: texts[r.index].text,
+            id: texts[r.index].id,
+            score: r.score
+        })
+    });
+    spiderWindow.webContents.send('bert-similar-reply', { result: newTexts });
 });
 
-
-
-
+ipcMain.on('bert-init', async(event, arg) => {
+    //console.log(arg) // 
+    const { text } = arg;
+    bert.predictAndStore(text);
+});
 
 function createWindow() {
     // Create the browser window.
@@ -38,8 +51,9 @@ function createWindow() {
         width: 800,
         height: 600,
         webPreferences: {
-            preload: path.join(__dirname, 'preload.js'),
-            nodeIntegration: true
+            //preload: path.join(__dirname, 'preload.js'),
+            nodeIntegration: true,
+            // worldSafeExecuteJavaScript: true
         }
     })
 
@@ -50,13 +64,28 @@ function createWindow() {
     // mainWindow.webContents.openDevTools()
     mainWindow.webContents.once("dom-ready", (event) => {
         console.log(event)
-            // mainWindow.webContents.executeJavaScript(`
+    });
+};
 
-        // `, true)
-        //     .then((result) => {
-        //         console.log(result) // Will be the JSON object from the fetch call
-        //     })
 
+function createSpiderWindow() {
+    // Create the browser window.
+    spiderWindow = new BrowserWindow({
+        width: 800,
+        height: 600,
+        show: false,
+        closeable: false,
+        webPreferences: {
+            preload: path.join(__dirname, 'preload.js'),
+            //nodeIntegration: true,
+            // worldSafeExecuteJavaScript: true
+        }
+    });
+
+    // and load the index.html of the app.
+    //spiderWindow.loadFile('index.html')
+    spiderWindow.webContents.once("dom-ready", (event) => {
+        spiderWindow.show();
     });
 }
 

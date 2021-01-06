@@ -3,16 +3,42 @@
 
 <head>
     <meta charset="UTF-8">
-    <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'">
-    <meta http-equiv="X-Content-Security-Policy" content="default-src 'self'; script-src 'self'">
     <title>darksee</title>
+    <style>
+        body {
+            padding: 0;
+            margin: 0;
+            background-color: #eeeeee;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            user-select: none;
+        }
+        
+        header {
+            height: 10vh;
+            width: 100%;
+            color: #4a4a4a;
+            text-align: center;
+        }
+        
+        #container {
+            width: calc(100% - 98px);
+            margin-bottom: 120px;
+            padding-top: 24px;
+            background: white;
+            box-shadow: 0px 0px 4px #c6daf3;
+        }
+    </style>
 </head>
 
 <body>
-    <h1>知识引擎</h1>
-    We are using Node.js <span id="node-version"></span>, Chromium <span id="chrome-version"></span>, and Electron <span id="electron-version"></span>.
+    <header>
+        <p>知识引擎</p>
+    </header>
 
+    <div id="container"></div>
     <!-- <main>
         <input type="text" placeholder="url" id="input_url">
     </main> -->
