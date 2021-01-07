@@ -79,8 +79,10 @@ function createSpiderWindow() {
     spiderWindow = new BrowserWindow({
         width: 800,
         height: 600,
-        show: false,
-        closeable: false,
+        //show: false,
+        closable: false,
+        parent: mainWindow,
+        modal: true,
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
             //nodeIntegration: true,
@@ -90,9 +92,9 @@ function createSpiderWindow() {
 
     // and load the index.html of the app.
     //spiderWindow.loadFile('index.html')
-    spiderWindow.webContents.once("dom-ready", (event) => {
-        spiderWindow.show();
-    });
+    // spiderWindow.webContents.once("dom-ready", (event) => {
+    //     spiderWindow.show();
+    // });
 }
 
 // This method will be called when Electron has finished
