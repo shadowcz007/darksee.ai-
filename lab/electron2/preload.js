@@ -26,11 +26,16 @@ window.addEventListener('DOMContentLoaded', () => {
         p.addEventListener("click", e => {
             e.preventDefault();
             if (p.innerText.trim() == "") return;
-            if (window.location.protocol != "file:") ipcRenderer.send('bert-similar', {
-                target: p.innerText.trim(),
-                texts: Array.from(ps, t => { return { id: t.id, text: t.text } })
+            if (window.location.protocol != "file:") ipcRenderer.send('save-knowledge', {
+                text: p.innerText.trim(),
+                url: window.location.href,
+                title: document.title.trim()
             });
-            Array.from(elements, s => s.style.backgroundColor = "transparent");
+            // if (window.location.protocol != "file:") ipcRenderer.send('bert-similar', {
+            //     target: p.innerText.trim(),
+            //     texts: Array.from(ps, t => { return { id: t.id, text: t.text } })
+            // });
+            // Array.from(elements, s => s.style.backgroundColor = "transparent");
         });
 
         if (p.innerText.trim() != "" && window.location.protocol != "file:") {

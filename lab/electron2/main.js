@@ -45,10 +45,16 @@ ipcMain.on('bert-init', async(event, arg) => {
     bert.predictAndStore(text);
 });
 
+ipcMain.on('save-knowledge', (e, arg) => {
+    const { text, url, title } = arg;
+    let vector = bert.predictAndStore(text);
+    mainWindow.webContents.send('save-knowledge', { data: { text, url, title, vector }, createTime: (new Date()).getTime() });
+});
+
 function createWindow() {
     // Create the browser window.
     mainWindow = new BrowserWindow({
-        width: 800,
+        width: 480,
         height: 600,
         webPreferences: {
             //preload: path.join(__dirname, 'preload.js'),

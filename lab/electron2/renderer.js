@@ -1,15 +1,121 @@
 const path = require('path');
+const clipboardy = require('clipboardy');
+const isUrl = require("is-url");
+
+
 const { ipcRenderer } = require('electron');
 
+
 const EditorJS = require('@editorjs/editorjs');
+const Paragraph = require('@editorjs/paragraph');
+const Header = require('@editorjs/header');
+const Alert = require('editorjs-alert');
+const Checklist = require('@editorjs/checklist');
+const SimpleImage = require('@editorjs/simple-image');
+const Table = require('editorjs-table');
+const AnyButton = require('editorjs-button');
+
+
+class Test {
+
+    constructor({ config, data }) {
+        this.data = data;
+    }
+
+    render() {
+        let div = document.createElement("div");
+        let title = document.createElement("h5");
+        let text = document.createElement("p");
+
+        let input = document.createElement("input");
+        input.setAttribute("placeholder", 'ffff');
+        div.appendChild(title);
+        div.appendChild(text);
+
+        div.appendChild(input);
+        title.innerText = this.data && this.data.title ? this.data.title : '';
+        text.innerText = this.data && this.data.text ? this.data.text : '';
+        div.setAttribute('data-url', this.data && this.data.url ? this.data.url : '');
+        div.setAttribute('data-vector', this.data && this.data.vector ? this.data.vector : '');
+        return div;
+    }
+    save(blockContent) {
+        console.log(blockContent)
+        return {
+            title: blockContent,
+            text: "",
+            url: "",
+            createTime: "",
+            vector: ""
+        }
+    }
+
+}
 
 const editor = new EditorJS({
     /**
      * Id of Element that should contain Editor instance
      */
-    holder: 'container'
+    placeholder: 'Let`s write an awesome story!',
+    holder: 'container',
+    tools: {
+        test: Test,
+        header: {
+            class: Header,
+            shortcut: 'CMD+SHIFT+H',
+            config: {
+                placeholder: 'Enter a header',
+                levels: [2, 3, 4],
+                defaultLevel: 3
+            }
+        },
+        paragraph: {
+            class: Paragraph,
+            inlineToolbar: true,
+        },
+        alert: {
+            class: Alert,
+            inlineToolbar: true,
+            shortcut: 'CMD+SHIFT+A',
+            config: {
+                defaultType: 'primary',
+                messagePlaceholder: 'Enter something',
+            },
+        },
+        checklist: {
+            class: Checklist,
+            inlineToolbar: true,
+        },
+        image: SimpleImage,
+        table: {
+            class: Table,
+            inlineToolbar: true,
+            config: {
+                rows: 2,
+                cols: 3,
+            },
+        },
+        anyButton: {
+            class: AnyButton,
+            inlineToolbar: false,
+            config: {
+                css: {
+                    "btnColor": "btn--gray",
+                }
+            }
+        },
+    },
+    onReady: () => {
+        console.log('Editor.js is ready to work!')
+    }
 });
 
+
+ipcRenderer.on('save-knowledge', (event, arg) => {
+    // editor.blocks.insert("paragraph", arg.data);
+    editor.blocks.insert('test', arg.data);
+    console.log(arg)
+});
 
 // (function() {
 //     const amdLoader = require("monaco-editor/min/vs/loader");
@@ -82,5 +188,12 @@ document.addEventListener('paste', async(event) => {
 });
 
 function openUrl(url) {
-    ipcRenderer.send('open-url', { url: url })
-}
+    if (isUrl(url)) ipcRenderer.send('open-url', { url: url });
+    return isUrl(url)
+};
+
+document.querySelector("#get-clipboard").addEventListener("click", e => {
+    e.preventDefault();
+    let url = clipboardy.readSync();
+    openUrl(url);
+})

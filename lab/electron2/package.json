@@ -11,12 +11,21 @@
     "repository": "https://github.com/shadowcz007/darksee.git",
     "dependencies": {
         "@editorjs/editorjs": "^2.19.1",
+        "@editorjs/header": "^2.6.1",
+        "@editorjs/paragraph": "^2.8.0",
         "@tensorflow/tfjs": "^2.8",
         "@tensorflow/tfjs-node": "^2.8",
         "bert": "git+https://github.com/shadowcz007/tfjs-bert-zh.git",
+        "clipboardy": "^2.3.0",
+        "editorjs-alert": "^1.0.3",
+        "editorjs-button": "^1.0.3",
+        "is-url": "^1.2.4",
         "monaco-editor": "^0.21.2"
     },
     "devDependencies": {
+        "@editorjs/checklist": "^1.3.0",
+        "@editorjs/simple-image": "^1.4.0",
+        "editorjs-table": "^1.4.7",
         "electron-builder": "22.9.1",
         "electron-prebuilt-compile": "8.2.0"
     },
