@@ -1,7 +1,10 @@
 // Modules to control application life and create native browser window
 const { app, BrowserWindow, ipcMain } = require('electron')
-const path = require('path')
+const path = require('path');
+const fs = require("fs");
 
+const css = fs.readFileSync(path.join(__dirname, "node_modules/medium-editor/dist/css/medium-editor.min.css"), 'utf-8');
+// console.log(css)
 // const tf = require("@tensorflow/tfjs-node")
 //     // console.log(tf)
 const { Bert } = require('bert');
@@ -80,9 +83,9 @@ function createSpiderWindow() {
         width: 800,
         height: 600,
         //show: false,
-        closable: false,
-        parent: mainWindow,
-        modal: true,
+        closable: true,
+        //parent: mainWindow,
+        //modal: true,
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
             //nodeIntegration: true,
@@ -92,9 +95,10 @@ function createSpiderWindow() {
 
     // and load the index.html of the app.
     //spiderWindow.loadFile('index.html')
-    // spiderWindow.webContents.once("dom-ready", (event) => {
-    //     spiderWindow.show();
-    // });
+    spiderWindow.webContents.once("dom-ready", (event) => {
+        //注入css
+        spiderWindow.webContents.insertCSS(css);
+    });
 }
 
 // This method will be called when Electron has finished

@@ -20,6 +20,7 @@
         "editorjs-alert": "^1.0.3",
         "editorjs-button": "^1.0.3",
         "is-url": "^1.2.4",
+        "medium-editor": "^5.23.3",
         "monaco-editor": "^0.21.2"
     },
     "devDependencies": {
