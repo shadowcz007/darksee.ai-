@@ -1,70 +1,27 @@
 // All of the Node.js APIs are available in the preload process.
 // It has the same sandbox as a Chrome extension.
-const ME = require("medium-editor");
-window.ME = ME;
+const Selection = require('./lib/selection');
 const { ipcRenderer } = require('electron');
-
+console.log(Selection)
 let ps = [];
 
 window.addEventListener('DOMContentLoaded', () => {
-    var HighlighterButton = ME.MediumEditor.extensions.button.extend({
-        name: 'highlighter',
-        tagNames: ['mark'],
-        contentDefault: '<b>H</b>',
-        contentFA: '<i class="fa fa-paint-brush"></i>',
-        aria: 'Highlight',
-        action: 'highlight',
-
-        init: function() {
-            // this.classApplier = rangy.createClassApplier('highlight', {
-            //     elementTagName: 'mark',
-            //     normalize: true
-            // });
-
-            this.button = this.document.createElement('button');
-            this.button.classList.add('medium-editor-action');
-            this.button.innerHTML = '<i class="fa fa-paint-brush"></i>';
-            this.button.title = 'Highlight';
-
-            this.on(this.button, 'click', this.handleClick.bind(this));
-        },
-
-        getButton: function() {
-            return this.button;
-        },
-
-        handleClick: function(event) {
-            this.classApplier.toggleSelection();
-            this.base.checkContentChanged();
-        },
-
-        isAlreadyApplied: function(node) {
-            return node.nodeName.toLowerCase() === 'mark';
-        },
-
-        isActive: function() {
-            return this.button.classList.contains('medium-editor-button-active');
-        },
-
-        setInactive: function() {
-            this.button.classList.remove('medium-editor-button-active');
-        },
-
-        setActive: function() {
-            this.button.classList.add('medium-editor-button-active');
+    document.body.setAttribute("contenteditable", true);
+    let selection = new Selection({
+        backgroundColor: 'crimson',
+        iconColor: '#fff',
+        callback: (text) => {
+            //console.log(text)
+            ipcRenderer.send('save-knowledge', {
+                text: text,
+                url: window.location.href,
+                title: document.title.trim()
+            });
         }
     });
 
-    var editor = new ME.MediumEditor('body', {
-        spellcheck: false,
-        toolbar: {
-            buttons: ['underline']
-        },
-        buttonLabels: 'fontawesome',
-        extensions: {
-            'highlighter': new HighlighterButton()
-        }
-    });
+
+
     // let t = (new Date()).getTime();
     // let elements = ((Array.from(document.querySelectorAll("p"), p => p))
     //     .concat(Array.from(document.querySelectorAll("h2"), p => p))).concat(Array.from(document.querySelectorAll("span"), p => p));
@@ -111,7 +68,12 @@ window.addEventListener('DOMContentLoaded', () => {
     //     }
     // });
 
+
+
 });
+
+
+
 
 ipcRenderer.on('bert-similar-reply', (event, arg) => {
     console.log(event, arg)
@@ -124,4 +86,4 @@ ipcRenderer.on('bert-similar-reply', (event, arg) => {
             };
         })
     })
-})
+});

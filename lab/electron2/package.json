@@ -15,6 +15,7 @@
         "@editorjs/paragraph": "^2.8.0",
         "@tensorflow/tfjs": "^2.8",
         "@tensorflow/tfjs-node": "^2.8",
+        "@yaireo/tagify": "^3.22.0",
         "bert": "git+https://github.com/shadowcz007/tfjs-bert-zh.git",
         "clipboardy": "^2.3.0",
         "editorjs-alert": "^1.0.3",

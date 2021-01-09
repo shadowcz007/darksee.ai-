@@ -1,10 +1,9 @@
 // Modules to control application life and create native browser window
-const { app, BrowserWindow, ipcMain } = require('electron')
+const { app, BrowserWindow, ipcMain, screen } = require('electron')
 const path = require('path');
 const fs = require("fs");
 
-const css = fs.readFileSync(path.join(__dirname, "node_modules/medium-editor/dist/css/medium-editor.min.css"), 'utf-8');
-// console.log(css)
+
 // const tf = require("@tensorflow/tfjs-node")
 //     // console.log(tf)
 const { Bert } = require('bert');
@@ -16,10 +15,11 @@ bert.init();
 
 
 let mainWindow, spiderWindow;
+let width, height;
 
 ipcMain.on('open-url', (event, arg) => {
     console.log(arg) // 
-    if (!spiderWindow) createSpiderWindow();
+    if (!spiderWindow || (spiderWindow && spiderWindow.isDestroyed())) createSpiderWindow();
     spiderWindow.loadURL(arg.url);
     //event.reply('asynchronous-reply', 'pong')
 });
@@ -32,7 +32,7 @@ ipcMain.on('bert-similar', async(event, arg) => {
     let newTexts = [];
     // console.log(res)
     Array.from(res, r => {
-        console.log(r, texts)
+        // console.log(r, texts)
         newTexts.push({
             text: texts[r.index].text,
             id: texts[r.index].id,
@@ -51,14 +51,19 @@ ipcMain.on('bert-init', async(event, arg) => {
 ipcMain.on('save-knowledge', (e, arg) => {
     const { text, url, title } = arg;
     let vector = bert.predictAndStore(text);
-    mainWindow.webContents.send('save-knowledge', { data: { text, url, title, vector }, createTime: (new Date()).getTime() });
+    let tags = ['t1', 't2']
+    let createTime = (new Date()).getTime();
+    mainWindow.webContents.send('save-knowledge', { data: { tags, text, url, title, vector, createTime } });
 });
 
 function createWindow() {
     // Create the browser window.
     mainWindow = new BrowserWindow({
-        width: 480,
-        height: 600,
+        width: 860,
+        height: parseInt(height * 0.8),
+        x: 50,
+        y: parseInt(height * 0.1),
+        show: false,
         webPreferences: {
             //preload: path.join(__dirname, 'preload.js'),
             nodeIntegration: true,
@@ -72,7 +77,8 @@ function createWindow() {
     // Open the DevTools.
     // mainWindow.webContents.openDevTools()
     mainWindow.webContents.once("dom-ready", (event) => {
-        console.log(event)
+        // console.log(event)
+        mainWindow.show(true);
     });
 };
 
@@ -80,24 +86,27 @@ function createWindow() {
 function createSpiderWindow() {
     // Create the browser window.
     spiderWindow = new BrowserWindow({
-        width: 800,
-        height: 600,
+        width: parseInt(width - 960),
+        height: parseInt(height * 0.8),
+        x: 960,
+        y: parseInt(height * 0.1),
         //show: false,
         closable: true,
-        //parent: mainWindow,
-        //modal: true,
+        parent: mainWindow,
+        modal: false,
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
             //nodeIntegration: true,
-            // worldSafeExecuteJavaScript: true
+            //worldSafeExecuteJavaScript: true
         }
     });
 
     // and load the index.html of the app.
     //spiderWindow.loadFile('index.html')
     spiderWindow.webContents.once("dom-ready", (event) => {
-        //注入css
-        spiderWindow.webContents.insertCSS(css);
+        //注入js
+        //     spiderWindow.webContents.executeJavaScript(`${selection};
+        //    `);
     });
 }
 
@@ -105,7 +114,11 @@ function createSpiderWindow() {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
-    createWindow()
+    var size = screen.getPrimaryDisplay().workAreaSize;
+    width = size.width;
+    height = size.height;
+
+    createWindow();
 
     app.on('activate', function() {
         // On macOS it's common to re-create a window in the app when the
