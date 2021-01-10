@@ -51,11 +51,11 @@ ipcMain.on('bert-init', async(event, arg) => {
 });
 
 ipcMain.on('save-knowledge', (e, arg) => {
-    const { text, url, title, tags } = arg;
+    const { text, url, title, tags, urls, images, id } = arg;
     let vector = bert.predictAndStore(text);
     // let tags = ['t1', 't2']
     let createTime = (new Date()).getTime();
-    mainWindow.webContents.send('save-knowledge', { data: { tags, text, url, title, vector, createTime } });
+    mainWindow.webContents.send('save-knowledge', { data: { tags, text, url, title, images, urls, vector, createTime } });
 });
 
 function createWindow() {
@@ -69,6 +69,7 @@ function createWindow() {
         webPreferences: {
             //preload: path.join(__dirname, 'preload.js'),
             nodeIntegration: true,
+            webSecurity: false,
             // worldSafeExecuteJavaScript: true
         }
     })
@@ -98,6 +99,7 @@ function createSpiderWindow() {
         // modal: false,
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
+            webSecurity: false,
             //nodeIntegration: true,
             //worldSafeExecuteJavaScript: true
         }
@@ -117,7 +119,7 @@ function openUrl(url) {
     if (isUrl(url) && url != spiderUrl) {
         let isOpen = dialog.showMessageBoxSync(mainWindow, {
             type: "question",
-            message: "是否打开新网站",
+            message: "是否打开新网站\n" + url,
             buttons: ["是", "否"]
         });
         if (isOpen === 0) {

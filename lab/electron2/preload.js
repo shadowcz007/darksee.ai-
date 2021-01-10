@@ -1,15 +1,79 @@
 const { ipcRenderer } = require('electron');
+const Jimp = require('jimp');
 
 const Selection = require('./src/selection');
 const Spider = require('./src/spider');
 
 const xhrProxy = require('./src/xhr_proxy.js');
-xhrProxy.addHandler(function(xhr) {
-    let data = {};
+xhrProxy.addHandler(async function(xhr) {
+    let data = null;
     let url = xhr.responseURL;
     if (url.match('https://api.zsxq.com/v2/groups/') && url.match("/topics?")) {
-        console.log(JSON.parse(xhr.response))
-    }
+        data = JSON.parse(xhr.response);
+        let nds = [];
+        for (let index = 0; index < data.resp_data.topics.length; index++) {
+            let t = data.resp_data.topics[index];
+            // console.log(t.talk)
+            let text = t.talk.text;
+            let div = document.createElement("div");
+            div.innerHTML = text;
+            let tags = [];
+            let urls = [];
+            let images = t.talk.images || [];
+            Array.from(div.querySelectorAll('e'), e => {
+                let title = decodeURIComponent(e.getAttribute("title")).trim();
+                if (e.getAttribute("type") === "hashtag") {
+                    tags.push(title);
+                };
+                if (e.getAttribute("type") === "web") {
+                    urls.push({
+                        title: title,
+                        url: e.getAttribute('href')
+                    })
+                }
+                e.innerHTML = `<span>${title}</span>${e.innerHTML}`;
+                //console.log(e)
+            });
+            // console.log(div)
+
+            //images的处理
+            let images2 = Array.from(images, img => img.large);
+            // console.log(images2)
+            let imagesBase = [];
+            for (let im = 0; im < images2.length; im++) {
+                let base64 = await getBase64Async(images2[im].url),
+                    title = images2[im].title;
+
+                imagesBase.push({
+                    title: title,
+                    base64: base64
+                })
+            }
+            // console.log(imagesBase)
+            nds.push({
+                id: t.topic_id,
+                text: div.innerText.trim(),
+                tags: tags,
+                urls: urls,
+                images: imagesBase
+            });
+
+        }
+
+        data = nds;
+    };
+
+    Array.from(data || [], d => {
+        ipcRenderer.send('save-knowledge', {
+            tags: d.tags,
+            text: d.text,
+            url: d.urls && d.urls.length > 0 ? d.urls[0].url : null,
+            title: d.urls && d.urls.length > 0 ? d.urls[0].title : null,
+            urls: d.urls,
+            images: d.images
+        });
+    });
+
 
 });
 
@@ -103,3 +167,25 @@ ipcRenderer.on('bert-similar-reply', (event, arg) => {
         })
     })
 });
+
+
+async function getBase64Async(src) {
+
+    return new Promise((resolve, reject) => {
+        Jimp.read({
+                url: src
+            })
+            .then(image => {
+                console.log(image)
+                image.getBase64Async(image._originalMime).then((base64) => {
+                    resolve(base64)
+                        // console.log(base64)
+                });
+
+            })
+            .catch(err => {
+                // Handle an exception.
+                reject();
+            });
+    });
+}

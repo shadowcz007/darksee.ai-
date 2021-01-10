@@ -19,8 +19,13 @@ class KnowledgeCard {
         text.className = `text`;
         text.setAttribute("contenteditable", true);
 
+        let images = document.createElement('div');
+        images.className = "images";
+        images.appendChild(this._createImages());
+
         div.appendChild(title);
         div.appendChild(text);
+        div.appendChild(images);
 
         let tagDiv = this._createTagsInput(this.data ? this.data.tags : null);
         div.appendChild(tagDiv);
@@ -31,6 +36,18 @@ class KnowledgeCard {
         div.setAttribute('data-vector', this.data && this.data.vector ? this.data.vector : '');
 
         return div;
+    }
+    _createImages() {
+        let div = document.createDocumentFragment();
+        let imgs = this.data && this.data.images ? this.data.images : [];
+        // if (!!imgs) { console.log(imgs) }
+        Array.from(imgs, img => {
+            let im = new Image();
+            im.src = img.url || img.base64;
+            im.className = "image";
+            div.appendChild(im);
+        });
+        return div
     }
     _createTagsInput(tags) {
             //console.log(tags)
@@ -123,6 +140,12 @@ class KnowledgeCard {
             `font-size: 14px;
         margin-bottom: 28px;`);
 
+        this._addCssRule(`${this.cssHead} .image`,
+            `width:100%;
+            `);
+
+        this._addCssRule(`${this.cssHead} .images`,
+            `margin:18px`);
 
         this._addCssRule(`${this.cssHead} .customLook`, `
             --tag-bg                  : #0052BF;
@@ -182,7 +205,15 @@ class KnowledgeCard {
     save(blockContent) {
         let tags = blockContent.querySelectorAll("tag");
         tags = Array.from(tags, t => t.innerText.trim());
-        let { title, text, url, createTime, vector } = this.data;
+        let {
+            title,
+            text,
+            url,
+            createTime,
+            vector,
+            urls,
+            images
+        } = this.data;
         // console.log(tags.innerText)
         text = blockContent.querySelector(".text").innerText.trim();
         return {
@@ -191,7 +222,9 @@ class KnowledgeCard {
             url,
             createTime,
             vector,
-            tags
+            tags,
+            urls: urls,
+            images: images
         }
     }
 

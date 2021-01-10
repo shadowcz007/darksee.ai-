@@ -87,7 +87,7 @@ const editor = new EditorJS({
 ipcRenderer.on('save-knowledge', (event, arg) => {
     // editor.blocks.insert("paragraph", arg.data);
     editor.blocks.insert('knowledgeCard', arg.data);
-    console.log(arg)
+    //console.log(arg)
 });
 
 // (function() {
