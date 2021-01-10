@@ -1,25 +1,41 @@
-// All of the Node.js APIs are available in the preload process.
-// It has the same sandbox as a Chrome extension.
-const Selection = require('./lib/selection');
 const { ipcRenderer } = require('electron');
-console.log(Selection)
+
+const Selection = require('./src/selection');
+const Spider = require('./src/spider');
+
+const xhrProxy = require('./src/xhr_proxy.js');
+xhrProxy.addHandler(function(xhr) {
+    let data = {};
+    let url = xhr.responseURL;
+    if (url.match('https://api.zsxq.com/v2/groups/') && url.match("/topics?")) {
+        console.log(JSON.parse(xhr.response))
+    }
+
+});
+
+// console.log(Selection)
 let ps = [];
 
 window.addEventListener('DOMContentLoaded', () => {
     document.body.setAttribute("contenteditable", true);
+
+    let spider = new Spider();
+    // console.log(spider)
     let selection = new Selection({
         backgroundColor: 'crimson',
         iconColor: '#fff',
-        callback: (text) => {
-            //console.log(text)
+        callback: (text, selection) => {
+            // console.log(selection)
+            let tags = spider.getTags(text);
+            // console.log(tags)
             ipcRenderer.send('save-knowledge', {
+                tags: tags,
                 text: text,
                 url: window.location.href,
                 title: document.title.trim()
             });
         }
     });
-
 
 
     // let t = (new Date()).getTime();

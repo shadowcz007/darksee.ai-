@@ -105,7 +105,7 @@ class Selection {
 
         div.appendChild(
             that.createButton(that.icon, function() {
-                if (that.menu.callback) that.menu.callback(that.text);
+                if (that.menu.callback) that.menu.callback(that.text, that.selection);
             })
         );
 
@@ -135,7 +135,7 @@ class Selection {
         div.appendChild(arrow);
 
         document.body.appendChild(div);
-        console.log("-----select------")
+        // console.log("-----select------")
     }
 
     createButton(icon, clickFn) {
