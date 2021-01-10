@@ -177,6 +177,7 @@ async function getBase64Async(src) {
             })
             .then(image => {
                 console.log(image)
+                    //TODO gif 有bug
                 image.getBase64Async(image._originalMime).then((base64) => {
                     resolve(base64)
                         // console.log(base64)
