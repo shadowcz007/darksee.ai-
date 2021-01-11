@@ -21,17 +21,24 @@ xhrProxy.addHandler(async function(xhr) {
             let urls = [];
             let images = t.talk.images || [];
             Array.from(div.querySelectorAll('e'), e => {
+                console.log(e)
                 let title = decodeURIComponent(e.getAttribute("title")).trim();
+
+                e.setAttribute("title", title);
                 if (e.getAttribute("type") === "hashtag") {
-                    tags.push(title);
+                    tags.push(title.slice(1, title.length - 1));
                 };
                 if (e.getAttribute("type") === "web") {
                     urls.push({
                         title: title,
                         url: e.getAttribute('href')
                     })
-                }
-                e.innerHTML = `<span>${title}</span>${e.innerHTML}`;
+                };
+                let span = document.createElement("span");
+                span.innerText = title;
+                e.insertBefore(span, e.children.length > 0 ? e.children[0] : null);
+
+
                 //console.log(e)
             });
             // console.log(div)
@@ -65,6 +72,7 @@ xhrProxy.addHandler(async function(xhr) {
 
     Array.from(data || [], d => {
         ipcRenderer.send('save-knowledge', {
+            from: window.location.hostname,
             tags: d.tags,
             text: d.text,
             url: d.urls && d.urls.length > 0 ? d.urls[0].url : null,

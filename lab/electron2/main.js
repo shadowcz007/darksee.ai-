@@ -19,6 +19,7 @@ let mainWindow, spiderWindow;
 let width, height;
 let appIcon = null;
 let spiderUrl = null;
+let isTargetHostNames = {};
 
 ipcMain.on('open-url', (event, arg) => {
     //console.log(arg) // 
@@ -51,7 +52,18 @@ ipcMain.on('bert-init', async(event, arg) => {
 });
 
 ipcMain.on('save-knowledge', (e, arg) => {
-    const { text, url, title, tags, urls, images, id } = arg;
+    const { text, url, title, tags, urls, images, id, from } = arg;
+    if (!isTargetHostNames[from]) {
+        let isOpen = dialog.showMessageBoxSync(spiderWindow, {
+            type: "question",
+            message: "是否收集",
+            buttons: ["是", "否"]
+        });
+        if (isOpen === 0) {
+            isTargetHostNames[from] = 1;
+        };
+    };
+    if (!isTargetHostNames[from]) return;
     let vector = bert.predictAndStore(text);
     // let tags = ['t1', 't2']
     let createTime = (new Date()).getTime();
@@ -135,8 +147,8 @@ function openUrl(url) {
 function createAppIcon() {
     appIcon = new Tray(path.join(__dirname, "assets/appIcon.png"));
     const contextMenu = Menu.buildFromTemplate([
-        { label: 'Item1', type: 'radio' },
-        { label: 'Item2', type: 'radio' }
+        { label: '收集', type: 'radio' },
+        { label: '调取', type: 'radio' }
     ]);
 
     // Make a change to the context menu

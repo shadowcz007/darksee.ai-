@@ -18,10 +18,15 @@
         
         header {
             height: 10vh;
-            width: 100%;
-            color: #4a4a4a;
-            text-align: center;
-            display: flex;
+    width: 100%;
+    color: #4a4a4a;
+    justify-content: center;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    z-index: 99;
         }
         
         #container {
@@ -30,6 +35,15 @@
             padding-top: 24px;
             background: white;
             box-shadow: 0px 0px 4px #c6daf3;
+        }
+        #save-all{
+            background: #0052BF;
+            color: white;
+            border-radius: 44px;
+            height: 44px;
+            width: 56px;
+            outline: none;
+            border: none;
         }
     </style>
     <link rel="stylesheet" href="./node_modules/@yaireo/tagify/dist/tagify.css">

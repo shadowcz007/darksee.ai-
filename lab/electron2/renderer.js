@@ -19,8 +19,9 @@ const editor = new EditorJS({
     /**
      * Id of Element that should contain Editor instance
      */
-    placeholder: 'Let`s write an awesome story!',
+    placeholder: '属于你的知识库',
     holder: 'container',
+    autofocus: true,
     tools: {
         knowledgeCard: KnowledgeCard,
         header: {
