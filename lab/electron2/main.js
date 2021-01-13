@@ -53,17 +53,21 @@ ipcMain.on('bert-init', async(event, arg) => {
 
 ipcMain.on('save-knowledge', (e, arg) => {
     const { text, url, title, tags, urls, images, id, from } = arg;
-    if (!isTargetHostNames[from]) {
-        let isOpen = dialog.showMessageBoxSync(spiderWindow, {
-            type: "question",
-            message: "是否收集",
-            buttons: ["是", "否"]
-        });
-        if (isOpen === 0) {
-            isTargetHostNames[from] = 1;
-        };
-    };
-    if (!isTargetHostNames[from]) return;
+    // if (!isTargetHostNames[from]) {
+    //     let isOpen = dialog.showMessageBoxSync(spiderWindow, {
+    //         type: "question",
+    //         message: "是否收集",
+    //         buttons: ["是", "否"]
+    //     });
+    //     if (isOpen === 0) {
+    //         isTargetHostNames[from] = 1;
+    //     } else {
+    //         isTargetHostNames[from] = 2;
+    //     }
+    //     isTargetHostNames[from]++;
+
+    // };
+    // if (!isTargetHostNames[from]) return;
     let vector = bert.predictAndStore(text);
     // let tags = ['t1', 't2']
     let createTime = (new Date()).getTime();

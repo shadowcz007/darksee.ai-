@@ -1,5 +1,9 @@
 const { ipcRenderer } = require('electron');
 const Jimp = require('jimp');
+const decodeGif = require("decode-gif");
+const fs = require("fs"),
+    path = require("path")
+window.decodeGif = decodeGif
 
 const Selection = require('./src/selection');
 const Spider = require('./src/spider');
@@ -21,7 +25,7 @@ xhrProxy.addHandler(async function(xhr) {
             let urls = [];
             let images = t.talk.images || [];
             Array.from(div.querySelectorAll('e'), e => {
-                console.log(e)
+                // console.log(e)
                 let title = decodeURIComponent(e.getAttribute("title")).trim();
 
                 e.setAttribute("title", title);
@@ -176,6 +180,23 @@ ipcRenderer.on('bert-similar-reply', (event, arg) => {
     })
 });
 
+async function fetchImage(url) {
+    return new Promise((resolve, reject) => {
+
+        fetch(url, {
+            method: 'get',
+            responseType: 'arraybuffer'
+        }).then(res => {
+            return res.arrayBuffer();
+        }).then(arraybuffer => {
+            resolve(arraybuffer);
+        })
+    })
+
+}
+
+
+
 
 async function getBase64Async(src) {
 
@@ -184,12 +205,28 @@ async function getBase64Async(src) {
                 url: src
             })
             .then(image => {
-                console.log(image)
-                    //TODO gif 有bug
-                image.getBase64Async(image._originalMime).then((base64) => {
-                    resolve(base64)
-                        // console.log(base64)
-                });
+                // console.log(image)
+                //TODO gif 有bug
+
+                if (image._originalMime == "image/gif") {
+                    // let fp = path.join(__dirname, "_" + (new Date()).getTime() + ".gif");
+                    // image.writeAsync(fp).then(() => {
+                    //     let base64 = decodeGif(fs.readFileSync(fp));
+                    //     resolve(base64)
+                    // });
+                    console.log(image.bitmap)
+                    fetchImage(src).then(b => {
+                        console.log(b)
+                        resolve(decodeGif(b));
+                    })
+
+                } else {
+                    image.getBase64Async(image._originalMime).then((base64) => {
+                        resolve(base64)
+                            // console.log(base64)
+                    });
+                }
+
 
             })
             .catch(err => {
