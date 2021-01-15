@@ -1,9 +1,9 @@
 const { ipcRenderer } = require('electron');
 const Jimp = require('jimp');
-const decodeGif = require("decode-gif");
+const { parseGIF, decompressFrames } = require("gifuct-js");
 const fs = require("fs"),
     path = require("path")
-window.decodeGif = decodeGif
+    // window.decodeGif = decodeGif
 
 const Selection = require('./src/selection');
 const Spider = require('./src/spider');
@@ -60,7 +60,7 @@ xhrProxy.addHandler(async function(xhr) {
                     base64: base64
                 })
             }
-            // console.log(imagesBase)
+            console.log(imagesBase)
             nds.push({
                 id: t.topic_id,
                 text: div.innerText.trim(),
@@ -197,7 +197,6 @@ async function fetchImage(url) {
 
 
 
-
 async function getBase64Async(src) {
 
     return new Promise((resolve, reject) => {
@@ -214,11 +213,12 @@ async function getBase64Async(src) {
                     //     let base64 = decodeGif(fs.readFileSync(fp));
                     //     resolve(base64)
                     // });
-                    console.log(image.bitmap)
-                    fetchImage(src).then(b => {
-                        console.log(b)
-                        resolve(decodeGif(b));
-                    })
+                    //console.log(image.bitmap)
+                    fetchImage(src).then(buff => parseGIF(buff))
+                        .then(gif => decompressFrames(gif, true)).then(frames => {
+                            //createGif(frames);
+                            resolve(frames);
+                        });
 
                 } else {
                     image.getBase64Async(image._originalMime).then((base64) => {
@@ -234,4 +234,44 @@ async function getBase64Async(src) {
                 reject();
             });
     });
+}
+
+function createGif(frames) {
+    // get the frame
+    var frame = frames[frameIndex]
+
+    gifCtx.clearRect(0, 0, c.width, c.height)
+
+    // draw the patch
+    drawPatch(frame)
+
+    // perform manipulation
+    manipulate()
+
+    // update the frame index
+    frameIndex++
+    if (frameIndex >= loadedFrames.length) {
+        frameIndex = 0
+    }
+}
+
+function drawPatch(frame) {
+    var dims = frame.dims
+
+    if (!frameImageData ||
+        dims.width != frameImageData.width ||
+        dims.height != frameImageData.height
+    ) {
+        tempCanvas.width = dims.width
+        tempCanvas.height = dims.height
+        frameImageData = tempCtx.createImageData(dims.width, dims.height)
+    }
+
+    // set the patch data as an override
+    frameImageData.data.set(frame.patch)
+
+    // draw the patch back over the canvas
+    tempCtx.putImageData(frameImageData, 0, 0)
+
+    gifCtx.drawImage(tempCanvas, dims.left, dims.top)
 }
