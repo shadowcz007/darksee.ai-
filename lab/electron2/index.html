@@ -18,25 +18,42 @@
         
         header {
             height: 10vh;
-    width: 100%;
-    color: #4a4a4a;
-    justify-content: center;
-    text-align: center;
-    display: flex;
-    align-items: center;
-    position: fixed;
-    top: 0;
-    z-index: 99;
+            width: 100%;
+            color: #4a4a4a;
+            justify-content: center;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            z-index: 99;
         }
         
         #container {
+            margin-top: 12vh;
             width: calc(100% - 98px);
+            overflow: hidden;
+            max-width: 1024px;
             margin-bottom: 120px;
             padding-top: 24px;
             background: white;
             box-shadow: 0px 0px 4px #c6daf3;
         }
-        #save-all{
+        
+        #container .codex-editor {}
+        
+        #container .ce-block__content {
+            max-width: 800px;
+        }
+        
+        #container .ce-toolbar__content {
+            max-width: 800px;
+        }
+        
+        #save-all {}
+        
+        button {
+            cursor: pointer;
             background: #0052BF;
             color: white;
             border-radius: 44px;
@@ -44,6 +61,11 @@
             width: 56px;
             outline: none;
             border: none;
+        }
+        
+        button:hover {
+            box-shadow: 1px 1px 4px #707684ad;
+            background: #CE0078
         }
     </style>
     <link rel="stylesheet" href="./node_modules/@yaireo/tagify/dist/tagify.css">
@@ -53,6 +75,7 @@
     <header>
         <!-- <button id="get-clipboard">+</button> -->
         <button id="save-all">SAVE</button>
+        <button id="train">训练</button>
     </header>
 
     <div id="container"></div>
@@ -61,7 +84,7 @@
     </main> -->
 
     <!-- You can also require other files to run in this process -->
-    <script src="./renderer.js"></script>
+    <script src="./src/renderer.js"></script>
 </body>
 
 </html>

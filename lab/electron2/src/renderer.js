@@ -11,9 +11,13 @@ const SimpleImage = require('@editorjs/simple-image');
 const Table = require('editorjs-table');
 const AnyButton = require('editorjs-button');
 
-const KnowledgeCard = require('./src/editorjs-knowledge-card');
+const KnowledgeCard = require("./src/editorjs-knowledge-card");
+// console.log(KnowledgeCard)
+const Pagination = require('./src/editorjs-pagination');
 
-
+let pagination = new Pagination({
+    dbName: 'knowledgeCard'
+});
 
 const editor = new EditorJS({
     /**
@@ -69,19 +73,11 @@ const editor = new EditorJS({
             }
         },
     },
-    data: (() => {
-        let dt = localStorage.getItem("knowledgeCard");
-        console.log(dt)
-        if (dt) {
-            dt = JSON.parse(dt);
-            return dt
-        } else {
-            return {}
-        }
-    })(),
+    data: pagination.load(),
     onReady: () => {
         console.log('Editor.js is ready to work!')
-    }
+    },
+    onChange: () => { console.log('Now I know that Editor\'s content changed!') }
 });
 
 
@@ -90,6 +86,16 @@ ipcRenderer.on('save-knowledge', (event, arg) => {
     editor.blocks.insert('knowledgeCard', arg.data);
     //console.log(arg)
 });
+ipcRenderer.on('save-knowledge-ready', (event, arg) => {
+    // editor.blocks.insert("paragraph", arg.data);
+    //editor.blocks.insert('knowledgeCard', arg.data);
+    console.log(arg)
+});
+
+
+// window.Scrollbar = Scrollbar;
+
+
 
 // (function() {
 //     const amdLoader = require("monaco-editor/min/vs/loader");
@@ -176,4 +182,18 @@ document.querySelector("#save-all").addEventListener("click", async e => {
     let res = await editor.save();
     localStorage.setItem("knowledgeCard", JSON.stringify(res));
     console.log(res)
+})
+
+document.querySelector("#train").addEventListener("click", async e => {
+    e.preventDefault();
+    let res = await editor.save();
+    let blocks = res.blocks.filter(b => b.type == "knowledgeCard");
+    // console.log(blocks)
+    blocks = Array.from(blocks, b => {
+        return {
+            tags: b.data.tags,
+            text: b.data.text
+        }
+    })
+    console.log(blocks)
 })

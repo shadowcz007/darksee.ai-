@@ -3,7 +3,7 @@ const { app, BrowserWindow, ipcMain, screen, Tray, Menu, clipboard, dialog } = r
 const path = require('path');
 const fs = require("fs");
 const isUrl = require("is-url");
-
+const hash = require('object-hash');
 
 // const tf = require("@tensorflow/tfjs-node")
 //     // console.log(tf)
@@ -14,12 +14,16 @@ const bert = new Bert({
 
 bert.init();
 
+const Db = require("./src/db");
+
 
 let mainWindow, spiderWindow;
 let width, height;
 let appIcon = null;
 let spiderUrl = null;
-let isTargetHostNames = {};
+
+//存储spider到 的知识卡片id
+let knowledgeCardDataset = {};
 
 ipcMain.on('open-url', (event, arg) => {
     //console.log(arg) // 
@@ -53,6 +57,10 @@ ipcMain.on('bert-init', async(event, arg) => {
 
 ipcMain.on('save-knowledge', (e, arg) => {
     const { text, url, title, tags, urls, images, id, from } = arg;
+    let createTime = (new Date()).getTime();
+    let data = { tags, text, url, title, images, urls, createTime };
+    data.id = hash(data);
+    if (knowledgeCardDataset[data.id]) return;
     // if (!isTargetHostNames[from]) {
     //     let isOpen = dialog.showMessageBoxSync(spiderWindow, {
     //         type: "question",
@@ -68,22 +76,25 @@ ipcMain.on('save-knowledge', (e, arg) => {
 
     // };
     // if (!isTargetHostNames[from]) return;
-    let vector = bert.predictAndStore(text);
+    knowledgeCardDataset[data.id] = data;
+    //data.vector = bert.predictAndStore(text);
     // let tags = ['t1', 't2']
-    let createTime = (new Date()).getTime();
-    mainWindow.webContents.send('save-knowledge', { data: { tags, text, url, title, images, urls, vector, createTime } });
+    // Db.add(data);
+    mainWindow.webContents.send('save-knowledge', { data: data });
 });
 
 function createWindow() {
     // Create the browser window.
     mainWindow = new BrowserWindow({
         width: 860,
+        minWidth: 800,
+        minHeight: 600,
         height: parseInt(height * 0.8),
         x: 50,
         y: parseInt(height * 0.1),
         show: false,
         webPreferences: {
-            //preload: path.join(__dirname, 'preload.js'),
+            //preload: path.join(__dirname, 'src/preload.js'),
             nodeIntegration: true,
             webSecurity: false,
             // worldSafeExecuteJavaScript: true
@@ -114,7 +125,7 @@ function createSpiderWindow() {
         // parent: mainWindow,
         // modal: false,
         webPreferences: {
-            preload: path.join(__dirname, 'preload.js'),
+            preload: path.join(__dirname, 'src/preload.js'),
             webSecurity: false,
             //nodeIntegration: true,
             //worldSafeExecuteJavaScript: true
@@ -128,6 +139,9 @@ function createSpiderWindow() {
         //     spiderWindow.webContents.executeJavaScript(`${selection};
         //    `);
     });
+    spiderWindow.webContents.once('did-finish-load', () => {
+
+    })
 }
 
 function openUrl(url) {
@@ -156,7 +170,7 @@ function createAppIcon() {
     ]);
 
     // Make a change to the context menu
-    contextMenu.items[1].checked = false;
+    contextMenu.items[0].checked = false;
     // Call this again for Linux because we modified the context menu
     appIcon.setContextMenu(contextMenu);
     appIcon.setToolTip('知识引擎');

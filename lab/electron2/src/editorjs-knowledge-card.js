@@ -1,5 +1,13 @@
+// const css = require('viewerjs/dist/viewer.css');
+const Viewer = require('viewerjs')
+const path = require("path"),
+    fs = require("fs");
+let viewerCss = fs.readFileSync(path.join(__dirname, "../node_modules/viewerjs/dist/viewer.css"));
+viewerCss = window.URL.createObjectURL(new Blob([viewerCss], { type: "text/css" }));
+
+
 const Tagify = require("@yaireo/tagify");
-// console.log(Tagify)
+// console.log(viewerCss)
 
 
 class KnowledgeCard {
@@ -8,6 +16,16 @@ class KnowledgeCard {
         this.data = data;
         this.cssHead = '.codex-editor .editorjs-knowledge-card';
         this._initCss();
+
+
+        if ((Array.from(document.head.querySelectorAll("link"), n => n.href).filter(f => f == viewerCss)).length == 0) {
+            let link = document.createElement("link");
+            link.href = viewerCss
+            link.setAttribute("type", "text/css")
+            link.setAttribute("rel", "stylesheet")
+            document.head.appendChild(link)
+        }
+
     }
 
     render() {
@@ -22,6 +40,7 @@ class KnowledgeCard {
         let images = document.createElement('div');
         images.className = "images";
         images.appendChild(this._createImages());
+        const gallery = new Viewer(images);
 
         div.appendChild(title);
         div.appendChild(text);
@@ -40,7 +59,7 @@ class KnowledgeCard {
     _createImages() {
         let div = document.createDocumentFragment();
         let imgs = this.data && this.data.images ? this.data.images : [];
-        // if (!!imgs) { console.log(imgs) }
+        console.log(imgs)
         Array.from(imgs, img => {
             let im = new Image();
             im.src = img.url || img.base64;
@@ -138,14 +157,28 @@ class KnowledgeCard {
 
         this._addCssRule(`${this.cssHead} .text`,
             `font-size: 14px;
+            outline:none;
         margin-bottom: 28px;`);
 
         this._addCssRule(`${this.cssHead} .image`,
             `width:100%;
+             max-width:120px;
+             cursor: pointer;
+             margin:8px;
+            `);
+
+        this._addCssRule(`${this.cssHead} .image:hover`,
+            `box-shadow: 0 0 0 2px inset currentColor;
             `);
 
         this._addCssRule(`${this.cssHead} .images`,
-            `margin:18px`);
+            `margin:18px;
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            max-width: 420px;
+            justify-content: space-between;
+            align-items: center;`);
 
         this._addCssRule(`${this.cssHead} .customLook`, `
             --tag-bg                  : #0052BF;
@@ -163,7 +196,8 @@ class KnowledgeCard {
             border: none;`);
 
         this._addCssRule(`${this.cssHead} .customLook .tagify__tag`, `
-            margin-top: 0;`);
+            margin-top: 0;
+            cursor: pointer;`);
 
         this._addCssRule(`${this.cssHead} .customLook .tagify__tag > div`, `
             border-radius: 25px;`);
@@ -212,7 +246,8 @@ class KnowledgeCard {
             createTime,
             vector,
             urls,
-            images
+            images,
+            id
         } = this.data;
         // console.log(tags.innerText)
         text = blockContent.querySelector(".text").innerText.trim();
@@ -223,6 +258,7 @@ class KnowledgeCard {
             createTime,
             vector,
             tags,
+            id,
             urls: urls,
             images: images
         }
