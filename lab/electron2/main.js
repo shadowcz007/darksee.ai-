@@ -6,16 +6,19 @@ const isUrl = require("is-url");
 const hash = require('object-hash');
 
 // const tf = require("@tensorflow/tfjs-node")
-//     // console.log(tf)
+const _MODEL_AUTOTAGS = path.join(__dirname, "model/auto-tags.json");
+const _MODEL_BERT = path.join(__dirname, 'model/bert_zh_L-12_H-768_A-12_2');
+
 const { Bert } = require('bert');
 const bert = new Bert({
-    modelLocalPath: path.join(__dirname, 'model/bert_zh_L-12_H-768_A-12_2')
+    modelLocalPath: _MODEL_BERT
 });
 
 bert.init();
 //
-const { textTrain } = require("text-multiclass-classification-tfjs");
-console.log(textTrain.start)
+const { textTrain, TextModel, initEmbedding } = require("text-multiclass-classification-tfjs");
+initEmbedding(null, bert);
+const autoTagsModel = new TextModel(_MODEL_AUTOTAGS);
 
 const Db = require("./src/db");
 
@@ -61,7 +64,7 @@ ipcMain.on('bert-init', async(event, arg) => {
 });
 
 //保存知识卡片
-ipcMain.on('save-knowledge', (e, arg) => {
+ipcMain.on('save-knowledge', async(e, arg) => {
     const { text, url, title, tags, urls, images, id, from } = arg;
     let createTime = (new Date()).getTime();
     let data = { tags, text, url, title, images, urls, createTime };
@@ -79,9 +82,10 @@ ipcMain.on('save-knowledge', (e, arg) => {
     //         isTargetHostNames[from] = 2;
     //     }
     //     isTargetHostNames[from]++;
-
-    // };
-    // if (!isTargetHostNames[from]) return;
+    let predictTags = await autoTagsModel.predict(text);
+    console.log(predictTags)
+        // };
+        // if (!isTargetHostNames[from]) return;
     knowledgeCardDataset[data.id] = data;
     //data.vector = bert.predictAndStore(text);
     // let tags = ['t1', 't2']
@@ -93,20 +97,25 @@ ipcMain.on('save-knowledge', (e, arg) => {
 ipcMain.on('train-text-auto-tags', async(event, arg) => {
     //console.log(arg)
     let dataset = arg.dataset;
-    let model = await textTrain.start(dataset, null, bert)
-    console.log(model)
-    mainWindow.webContents.send('train-text-auto-tags-result', { model: model.export2str() });
+    // console.log('dataset', dataset)
+    let model = await textTrain.start(dataset, _MODEL_AUTOTAGS)
+        //console.log(model)
+    mainWindow.webContents.send('train-text-auto-tags-result', { model: model });
+});
 
+//自动打标
+ipcMain.on('auto-tags', async(event, arg) => {
+    //console.log(arg)
+    let res = await autoTagsModel.predict(arg.text);
+    // event.send
 });
 
 //测试
 ipcMain.on('test', async(event, arg) => {
     //console.log(arg)
-    mainWindow.webContents.send('train-text-auto-tags-result', { textTrain });
-
+    let res = await autoTagsModel.predict(arg.text);
+    console.log(res)
 });
-
-
 
 
 function createWindow() {

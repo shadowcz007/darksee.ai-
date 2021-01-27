@@ -97,8 +97,8 @@ ipcRenderer.on('train-text-auto-tags-result', (event, arg) => {
     //editor.blocks.insert('knowledgeCard', arg.data);
     console.log(arg)
 });
-window._test = function() {
-        ipcRenderer.send('test', {});
+window._test = function(text) {
+        ipcRenderer.send('test', { text: text });
     }
     // window.Scrollbar = Scrollbar;
 
