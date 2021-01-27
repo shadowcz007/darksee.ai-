@@ -59,10 +59,11 @@ class KnowledgeCard {
     _createImages() {
         let div = document.createDocumentFragment();
         let imgs = this.data && this.data.images ? this.data.images : [];
-        console.log(imgs)
+        // console.log(imgs)
         Array.from(imgs, img => {
             let im = new Image();
             im.src = img.url || img.base64;
+            im.title = img.title || "IMG";
             im.className = "image";
             div.appendChild(im);
         });
@@ -168,7 +169,8 @@ class KnowledgeCard {
             `);
 
         this._addCssRule(`${this.cssHead} .image:hover`,
-            `box-shadow: 0 0 0 2px inset currentColor;
+            `box-shadow:#a7caef 0px 4px 8px 0px;
+            transform: scale(1.05);
             `);
 
         this._addCssRule(`${this.cssHead} .images`,

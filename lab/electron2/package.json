@@ -30,6 +30,7 @@
         "monaco-editor": "^0.21.2",
         "object-hash": "^2.1.1",
         "sql.js": "^1.4.0",
+        "text-multiclass-classification-tfjs": "git+https://github.com/shadowcz007/tfjs-text-multiclass-classification.git",
         "viewerjs": "^1.9.0"
     },
     "devDependencies": {

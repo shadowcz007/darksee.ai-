@@ -1,6 +1,6 @@
 const path = require('path');
 const { ipcRenderer, clipboard } = require('electron');
-
+window.tfjs = require('@tensorflow/tfjs')
 
 const EditorJS = require('@editorjs/editorjs');
 const Paragraph = require('@editorjs/paragraph');
@@ -92,8 +92,15 @@ ipcRenderer.on('save-knowledge-ready', (event, arg) => {
     console.log(arg)
 });
 
-
-// window.Scrollbar = Scrollbar;
+ipcRenderer.on('train-text-auto-tags-result', (event, arg) => {
+    // editor.blocks.insert("paragraph", arg.data);
+    //editor.blocks.insert('knowledgeCard', arg.data);
+    console.log(arg)
+});
+window._test = function() {
+        ipcRenderer.send('test', {});
+    }
+    // window.Scrollbar = Scrollbar;
 
 
 
@@ -189,11 +196,15 @@ document.querySelector("#train").addEventListener("click", async e => {
     let res = await editor.save();
     let blocks = res.blocks.filter(b => b.type == "knowledgeCard");
     // console.log(blocks)
-    blocks = Array.from(blocks, b => {
-        return {
-            tags: b.data.tags,
-            text: b.data.text
-        }
+    let dataset = [];
+    Array.from(blocks, b => {
+        b.data.tags.forEach(t => {
+            dataset.push({
+                label: t,
+                text: b.data.text.replace(/\s|\n/ig, "")
+            })
+        })
     })
-    console.log(blocks)
-})
+    console.log(dataset)
+    ipcRenderer.send('train-text-auto-tags', { dataset: dataset });
+});

@@ -13,6 +13,9 @@ const bert = new Bert({
 });
 
 bert.init();
+//
+const { textTrain } = require("text-multiclass-classification-tfjs");
+console.log(textTrain.start)
 
 const Db = require("./src/db");
 
@@ -31,6 +34,7 @@ ipcMain.on('open-url', (event, arg) => {
     //event.reply('asynchronous-reply', 'pong')
 });
 
+//相似度计算
 ipcMain.on('bert-similar', async(event, arg) => {
     //console.log(arg) // 
     const { target, texts } = arg;
@@ -49,12 +53,14 @@ ipcMain.on('bert-similar', async(event, arg) => {
     spiderWindow.webContents.send('bert-similar-reply', { result: newTexts });
 });
 
+//提前预测
 ipcMain.on('bert-init', async(event, arg) => {
     //console.log(arg) // 
     const { text } = arg;
     bert.predictAndStore(text);
 });
 
+//保存知识卡片
 ipcMain.on('save-knowledge', (e, arg) => {
     const { text, url, title, tags, urls, images, id, from } = arg;
     let createTime = (new Date()).getTime();
@@ -82,6 +88,26 @@ ipcMain.on('save-knowledge', (e, arg) => {
     // Db.add(data);
     mainWindow.webContents.send('save-knowledge', { data: data });
 });
+
+//训练打标模型
+ipcMain.on('train-text-auto-tags', async(event, arg) => {
+    //console.log(arg)
+    let dataset = arg.dataset;
+    let model = await textTrain.start(dataset, null, bert)
+    console.log(model)
+    mainWindow.webContents.send('train-text-auto-tags-result', { model: model.export2str() });
+
+});
+
+//测试
+ipcMain.on('test', async(event, arg) => {
+    //console.log(arg)
+    mainWindow.webContents.send('train-text-auto-tags-result', { textTrain });
+
+});
+
+
+
 
 function createWindow() {
     // Create the browser window.
