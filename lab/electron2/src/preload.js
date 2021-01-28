@@ -34,7 +34,10 @@ xhrProxy.addHandler(async function(xhr) {
 
                     e.setAttribute("title", title);
                     if (e.getAttribute("type") === "hashtag") {
-                        tags.push(title.slice(1, title.length - 1));
+                        tags.push({
+                            value: title.slice(1, title.length - 1),
+                            type: 0
+                        });
                     };
                     if (e.getAttribute("type") === "web") {
                         urls.push({
@@ -101,13 +104,17 @@ xhrProxy.addHandler(async function(xhr) {
     // });
     // console.log(topicIds)
     if (document.querySelector('.darksee_spider_window_button')) {
-        let topicIdsArray = [];
-        for (const id in topicIds) {
-            if (!topicIds[id].isSave) topicIdsArray.push(1);
-        };
-        document.querySelector('.darksee_spider_window_button').innerText = `收集${topicIdsArray.length}`;
+        document.querySelector('.darksee_spider_window_button').innerText = `收集${getTopicNum()}`;
     }
 });
+
+function getTopicNum() {
+    let topicIdsArray = [];
+    for (const id in topicIds) {
+        if (!topicIds[id].isSave) topicIdsArray.push(1);
+    };
+    return topicIdsArray.length
+}
 
 // console.log(Selection)
 let ps = [];
@@ -122,10 +129,10 @@ window.addEventListener('DOMContentLoaded', () => {
         iconColor: '#fff',
         callback: (text, selection) => {
             // console.log(selection)
-            let tags = spider.getTags(text);
+            // let tags = spider.getTags(text);
             // console.log(tags)
             ipcRenderer.send('save-knowledge', {
-                tags: tags,
+                tags: [],
                 text: text,
                 url: window.location.href,
                 title: document.title.trim()
@@ -176,8 +183,9 @@ window.addEventListener('DOMContentLoaded', () => {
                     ipcRenderer.send('save-knowledge', topic);
                     topicIds[id].isSave = true;
                 }
-            }
-        })
+            };
+            document.querySelector('.darksee_spider_window_button').innerText = `收集${getTopicNum()}`;
+        });
         document.body.appendChild(div);
     }
 

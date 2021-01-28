@@ -21,6 +21,7 @@ class Spider {
     }
     getTags(text) {
         if (this.hosts[this.host]) return this.hosts[this.host](text);
+        return []
     }
     zsxq(text) {
         //wx.zsxq.com

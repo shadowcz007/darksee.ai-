@@ -83,13 +83,19 @@ ipcMain.on('save-knowledge', async(e, arg) => {
     //     }
     //     isTargetHostNames[from]++;
     let predictTags = await autoTagsModel.predict(text);
-    console.log(predictTags)
-        // };
-        // if (!isTargetHostNames[from]) return;
+    // console.log(predictTags)
+    data.tags.push({
+        value: predictTags,
+        type: 1
+    });
+    // };
+    // if (!isTargetHostNames[from]) return;
     knowledgeCardDataset[data.id] = data;
     //data.vector = bert.predictAndStore(text);
     // let tags = ['t1', 't2']
-    // Db.add(data);
+    //存储到数据库
+    Db.add(data);
+    if ((Object.keys(knowledgeCardDataset)).length % 100 === 0) Db.export()
     mainWindow.webContents.send('save-knowledge', { data: data });
 });
 
@@ -110,6 +116,12 @@ ipcMain.on('auto-tags', async(event, arg) => {
     // event.send
 });
 
+//保存笔记
+ipcMain.on('save-note', async(event, arg) => {
+    //console.log(arg)
+    console.log(res)
+});
+
 //测试
 ipcMain.on('test', async(event, arg) => {
     //console.log(arg)
@@ -121,7 +133,7 @@ ipcMain.on('test', async(event, arg) => {
 function createWindow() {
     // Create the browser window.
     mainWindow = new BrowserWindow({
-        width: 860,
+        width: 960,
         minWidth: 800,
         minHeight: 600,
         height: parseInt(height * 0.8),

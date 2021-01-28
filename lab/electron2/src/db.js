@@ -21,6 +21,15 @@ class Db {
         });
     }
 
+    check() {
+        //校验数据
+        // id: t.topic_id,
+        // text: string,
+        // tags: tags, {value,type}
+        // urls: urls,
+        // images: imagesBase
+    }
+
     // INSERT INTO knowledge VALUES('fwfwefwefwefweff1', "{da:2}");
     // INSERT INTO knowledge VALUES('fwfwefwefwe3fweff1', "{da:2}");
     // SELECT * FROM knowledge;

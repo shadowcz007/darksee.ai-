@@ -200,7 +200,7 @@ document.querySelector("#train").addEventListener("click", async e => {
     Array.from(blocks, b => {
         b.data.tags.forEach(t => {
             dataset.push({
-                label: t,
+                label: t.value,
                 text: b.data.text.replace(/\s|\n/ig, "")
             })
         })

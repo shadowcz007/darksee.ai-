@@ -69,21 +69,22 @@ class KnowledgeCard {
         });
         return div
     }
-    _createTagsInput(tags) {
-            //console.log(tags)
+    _createTagsInput(tagsObj) {
+            console.log('_createTagsInput', tagsObj)
+                // let tags = Array.from(tagsObj, t => t.value);
             let div = document.createElement("div");
             div.className = "tags";
             let input = document.createElement("input");
             input.setAttribute("placeholder", 'ffff');
             input.className = "customLook";
-            input.value = tags;
+            // input.value = tags;
             let button = document.createElement("button");
             button.innerText = "+";
             div.appendChild(input);
             div.appendChild(button);
 
             let tagify = new Tagify(input, {
-                whitelist: ['124'],
+                //whitelist: Array.from(tagsObj.filter(t => t.type === 0), t => t.value),
                 callbacks: {
                     "invalid": onInvalidTag
                 },
@@ -92,6 +93,14 @@ class KnowledgeCard {
                     enabled: 1 // show suggestions dropdown after 1 typed character
                 }
             });
+
+            tagify.addTags(Array.from(tagsObj, t => {
+                return {
+                    value: t.value,
+                    color: t.type == 0 ? "blue" : "gray"
+                }
+            }))
+
             button.addEventListener("click", onAddButtonClick)
 
             function onAddButtonClick() {
@@ -200,6 +209,10 @@ class KnowledgeCard {
         this._addCssRule(`${this.cssHead} .customLook .tagify__tag`, `
             margin-top: 0;
             cursor: pointer;`);
+
+        this._addCssRule(`${this.cssHead} .customLook .tagify__tag[color=gray]`, `
+            --tag-bg                  : red;
+        `);
 
         this._addCssRule(`${this.cssHead} .customLook .tagify__tag > div`, `
             border-radius: 25px;`);
