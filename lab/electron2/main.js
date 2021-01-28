@@ -1,134 +1,19 @@
 // Modules to control application life and create native browser window
-const { app, BrowserWindow, ipcMain, screen, Tray, Menu, clipboard, dialog } = require('electron')
+const { app, BrowserWindow, ipcMain, screen, Tray, Menu, clipboard, dialog } = require('electron');
 const path = require('path');
 const fs = require("fs");
 const isUrl = require("is-url");
-const hash = require('object-hash');
-
-// const tf = require("@tensorflow/tfjs-node")
-const _MODEL_AUTOTAGS = path.join(__dirname, "model/auto-tags.json");
-const _MODEL_BERT = path.join(__dirname, 'model/bert_zh_L-12_H-768_A-12_2');
-
-const { Bert } = require('bert');
-const bert = new Bert({
-    modelLocalPath: _MODEL_BERT
-});
-
-bert.init();
-//
-const { textTrain, TextModel, initEmbedding } = require("text-multiclass-classification-tfjs");
-initEmbedding(null, bert);
-const autoTagsModel = new TextModel(_MODEL_AUTOTAGS);
-
-const Db = require("./src/db");
-
 
 let mainWindow, spiderWindow;
 let width, height;
 let appIcon = null;
 let spiderUrl = null;
 
-//存储spider到 的知识卡片id
-let knowledgeCardDataset = {};
+global.mainWindow = null;
 
 ipcMain.on('open-url', (event, arg) => {
-    //console.log(arg) // 
     openUrl(arg.url);
-    //event.reply('asynchronous-reply', 'pong')
 });
-
-//相似度计算
-ipcMain.on('bert-similar', async(event, arg) => {
-    //console.log(arg) // 
-    const { target, texts } = arg;
-
-    let res = await bert.textsRank(target, Array.from(texts, t => t.text));
-    let newTexts = [];
-    // console.log(res)
-    Array.from(res, r => {
-        // console.log(r, texts)
-        newTexts.push({
-            text: texts[r.index].text,
-            id: texts[r.index].id,
-            score: r.score
-        })
-    });
-    spiderWindow.webContents.send('bert-similar-reply', { result: newTexts });
-});
-
-//提前预测
-ipcMain.on('bert-init', async(event, arg) => {
-    //console.log(arg) // 
-    const { text } = arg;
-    bert.predictAndStore(text);
-});
-
-//保存知识卡片
-ipcMain.on('save-knowledge', async(e, arg) => {
-    const { text, url, title, tags, urls, images, id, from } = arg;
-    let createTime = (new Date()).getTime();
-    let data = { tags, text, url, title, images, urls, createTime };
-    data.id = hash(data);
-    if (knowledgeCardDataset[data.id]) return;
-    // if (!isTargetHostNames[from]) {
-    //     let isOpen = dialog.showMessageBoxSync(spiderWindow, {
-    //         type: "question",
-    //         message: "是否收集",
-    //         buttons: ["是", "否"]
-    //     });
-    //     if (isOpen === 0) {
-    //         isTargetHostNames[from] = 1;
-    //     } else {
-    //         isTargetHostNames[from] = 2;
-    //     }
-    //     isTargetHostNames[from]++;
-    let predictTags = await autoTagsModel.predict(text);
-    // console.log(predictTags)
-    data.tags.push({
-        value: predictTags,
-        type: 1
-    });
-    // };
-    // if (!isTargetHostNames[from]) return;
-    knowledgeCardDataset[data.id] = data;
-    //data.vector = bert.predictAndStore(text);
-    // let tags = ['t1', 't2']
-    //存储到数据库
-    Db.add(data);
-    if ((Object.keys(knowledgeCardDataset)).length % 100 === 0) Db.export()
-    mainWindow.webContents.send('save-knowledge', { data: data });
-});
-
-//训练打标模型
-ipcMain.on('train-text-auto-tags', async(event, arg) => {
-    //console.log(arg)
-    let dataset = arg.dataset;
-    // console.log('dataset', dataset)
-    let model = await textTrain.start(dataset, _MODEL_AUTOTAGS)
-        //console.log(model)
-    mainWindow.webContents.send('train-text-auto-tags-result', { model: model });
-});
-
-//自动打标
-ipcMain.on('auto-tags', async(event, arg) => {
-    //console.log(arg)
-    let res = await autoTagsModel.predict(arg.text);
-    // event.send
-});
-
-//保存笔记
-ipcMain.on('save-note', async(event, arg) => {
-    //console.log(arg)
-    console.log(res)
-});
-
-//测试
-ipcMain.on('test', async(event, arg) => {
-    //console.log(arg)
-    let res = await autoTagsModel.predict(arg.text);
-    console.log(res)
-});
-
 
 function createWindow() {
     // Create the browser window.
@@ -157,6 +42,8 @@ function createWindow() {
         // console.log(event)
         mainWindow.show(true);
     });
+
+    global.mainWindow = mainWindow;
 };
 
 

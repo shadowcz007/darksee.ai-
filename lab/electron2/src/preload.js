@@ -1,8 +1,7 @@
 const { ipcRenderer, remote } = require('electron');
 const Jimp = require('jimp');
-// const fs = require("fs"),
-//     path = require("path")
-// window.decodeGif = decodeGif
+
+const mainWin = remote.getGlobal("mainWindow");
 
 const Selection = require('./selection');
 const Spider = require('./spider');
@@ -176,16 +175,20 @@ window.addEventListener('DOMContentLoaded', () => {
         div.className = 'darksee_spider_window_button';
         div.innerText = "收集";
         div.setAttribute("contenteditable", false);
+        // let topicsForSave = [];
         div.addEventListener('click', e => {
             for (const id in topicIds) {
                 let topic = topicIds[id];
                 if (!topic.isSave) {
-                    ipcRenderer.send('save-knowledge', topic);
                     topicIds[id].isSave = true;
+                    ipcRenderer.sendTo(mainWin.webContents.id, 'save-knowledge', topic);
                 }
             };
             document.querySelector('.darksee_spider_window_button').innerText = `收集${getTopicNum()}`;
         });
+
+
+
         document.body.appendChild(div);
     }
 

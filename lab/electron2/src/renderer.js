@@ -1,6 +1,68 @@
 const path = require('path');
 const { ipcRenderer, clipboard } = require('electron');
-window.tfjs = require('@tensorflow/tfjs')
+const hash = require('object-hash');
+
+// window.tfjs = require('@tensorflow/tfjs')
+const _MODEL_AUTOTAGS = path.join(__dirname, "model/auto-tags.json");
+const _MODEL_BERT = path.join(__dirname, 'model/bert_zh_L-12_H-768_A-12_2');
+// console.log(_MODEL_BERT)
+const { Bert } = require('bert');
+const bert = new Bert({
+    modelLocalPath: _MODEL_BERT
+});
+bert.init();
+
+
+const { textTrain, TextModel, initEmbedding } = require("text-multiclass-classification-tfjs");
+initEmbedding(null, bert);
+const autoTagsModel = new TextModel(_MODEL_AUTOTAGS);
+
+const Db = require("./src/db");
+
+
+
+//相似度排序
+async function bertSimilar(arg) {
+    const { target, texts } = arg;
+
+    let res = await bert.textsRank(target, Array.from(texts, t => t.text));
+    let newTexts = [];
+    // console.log(res)
+    Array.from(res, r => {
+        // console.log(r, texts)
+        newTexts.push({
+            text: texts[r.index].text,
+            id: texts[r.index].id,
+            score: r.score
+        })
+    });
+    return newTexts
+        //spiderWindow.webContents.send('bert-similar-reply', { result: newTexts });
+}
+//提前预测
+function bertInit(arg) {
+    //console.log(arg) // 
+    const { text } = arg;
+    bert.predictAndStore(text);
+}
+
+
+
+//训练打标模型
+async function trainTextAutoTags(arg) {
+    let dataset = arg.dataset;
+    let model = await textTrain.start(dataset, _MODEL_AUTOTAGS)
+    mainWindow.webContents.send('train-text-auto-tags-result', { model: model });
+};
+
+
+//自动打标
+async function autoTags(arg) {
+    //console.log(arg)
+    let res = await autoTagsModel.predict(arg.text);
+    // event.send
+};
+
 
 const EditorJS = require('@editorjs/editorjs');
 const Paragraph = require('@editorjs/paragraph');
@@ -14,6 +76,7 @@ const AnyButton = require('editorjs-button');
 const KnowledgeCard = require("./src/editorjs-knowledge-card");
 // console.log(KnowledgeCard)
 const Pagination = require('./src/editorjs-pagination');
+const { rejects } = require('assert');
 
 let pagination = new Pagination({
     dbName: 'knowledgeCard'
@@ -81,10 +144,89 @@ const editor = new EditorJS({
 });
 
 
+let saveKs = [];
+
+class Knowledge {
+    constructor(datas) {
+            //存储spider到 的知识卡片id
+            this.knowledgeCardDataset = {};
+
+            this.datas = datas || [];
+            this.time = (new Date()).getTime();
+            this.running = false;
+            // this.saveKnowledgeBatch();
+        }
+        //保存知识卡片
+    save(arg) {
+        return new Promise((resolve, reject) => {
+            const { text, url, title, tags, urls, images, id, from } = arg;
+            let createTime = (new Date()).getTime();
+            let data = { tags, text, url, title, images, urls, createTime };
+            data.id = hash(data);
+            if (this.knowledgeCardDataset[data.id]) return;
+            // if (!isTargetHostNames[from]) {
+            //     let isOpen = dialog.showMessageBoxSync(spiderWindow, {
+            //         type: "question",
+            //         message: "是否收集",
+            //         buttons: ["是", "否"]
+            //     });
+            //     if (isOpen === 0) {
+            //         isTargetHostNames[from] = 1;
+            //     } else {
+            //         isTargetHostNames[from] = 2;
+            //     }
+            //     isTargetHostNames[from]++;
+            autoTagsModel.predict(text).then((predictTags) => {
+                // console.log(predictTags)
+                data.tags.push({
+                    value: predictTags,
+                    type: 1
+                });
+                // };
+                // if (!isTargetHostNames[from]) return;
+                this.knowledgeCardDataset[data.id] = data;
+                //data.vector = bert.predictAndStore(text);
+                // let tags = ['t1', 't2']
+                //存储到数据库
+                // Db.add(data);
+                if ((Object.keys(this.knowledgeCardDataset)).length % 100 === 0) Db.export();
+                resolve(data);
+            });
+        })
+    }
+    add(topic) {
+        this.datas.push(topic);
+        // this.running = false;
+        this.saveKnowledgeBatch();
+    }
+    saveKnowledgeBatch() {
+        if (this.datas.length == 0) return;
+        if (this.running == true) return setTimeout(() => { this.saveKnowledgeBatch(); }, 500);;
+        // if (this.datas.length < 10) return;
+        let topic = this.datas.pop();
+        if (topic) {
+            this.running = true;
+            this.save(topic).then(data => {
+                editor.blocks.insert('knowledgeCard', data);
+                if ((new Date()).getTime() - this.time < 500) {
+                    setTimeout(() => {
+                        this.saveKnowledgeBatch();
+                    }, 500);
+                } else {
+                    this.saveKnowledgeBatch();
+                };
+                this.running = false;
+                this.time = (new Date()).getTime();
+            });
+        }
+    };
+}
+
+const kg = new Knowledge();
+
 ipcRenderer.on('save-knowledge', (event, arg) => {
-    // editor.blocks.insert("paragraph", arg.data);
-    editor.blocks.insert('knowledgeCard', arg.data);
-    //console.log(arg)
+    // console.log(arg)
+    kg.add(arg);
 });
 ipcRenderer.on('save-knowledge-ready', (event, arg) => {
     // editor.blocks.insert("paragraph", arg.data);
