@@ -19,7 +19,7 @@ const autoTagsModel = new TextModel(_MODEL_AUTOTAGS);
 
 const Db = require("./src/db");
 
-
+document.getElementById("info").innerText = `知识卡数量${Db.size()}`;
 
 //相似度排序
 async function bertSimilar(arg) {
@@ -154,7 +154,8 @@ class Knowledge {
             this.datas = datas || [];
             this.time = (new Date()).getTime();
             this.running = false;
-            // this.saveKnowledgeBatch();
+            this.timeout = 1000;
+            // this.saveBatch();
         }
         //保存知识卡片
     save(arg) {
@@ -188,7 +189,7 @@ class Knowledge {
                 //data.vector = bert.predictAndStore(text);
                 // let tags = ['t1', 't2']
                 //存储到数据库
-                // Db.add(data);
+                Db.add(data);
                 if ((Object.keys(this.knowledgeCardDataset)).length % 100 === 0) Db.export();
                 resolve(data);
             });
@@ -197,23 +198,23 @@ class Knowledge {
     add(topic) {
         this.datas.push(topic);
         // this.running = false;
-        this.saveKnowledgeBatch();
+        this.saveBatch();
     }
-    saveKnowledgeBatch() {
+    saveBatch() {
         if (this.datas.length == 0) return;
-        if (this.running == true) return setTimeout(() => { this.saveKnowledgeBatch(); }, 500);;
+        if (this.running == true) return setTimeout(() => { this.saveBatch(); }, this.timeout);;
         // if (this.datas.length < 10) return;
         let topic = this.datas.pop();
         if (topic) {
             this.running = true;
             this.save(topic).then(data => {
                 editor.blocks.insert('knowledgeCard', data);
-                if ((new Date()).getTime() - this.time < 500) {
+                if ((new Date()).getTime() - this.time < this.timeout) {
                     setTimeout(() => {
-                        this.saveKnowledgeBatch();
-                    }, 500);
+                        this.saveBatch();
+                    }, this.timeout);
                 } else {
-                    this.saveKnowledgeBatch();
+                    this.saveBatch();
                 };
                 this.running = false;
                 this.time = (new Date()).getTime();

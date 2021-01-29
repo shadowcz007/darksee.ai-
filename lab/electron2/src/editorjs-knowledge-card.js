@@ -128,7 +128,7 @@ class KnowledgeCard {
         // 创建 stylesheet 对象
         var sheet = (() => {
             let id = `${that.cssHead.replace(/\s|\./ig,'')}_style`;
-            console.log(id)
+            // console.log(id)
             let style = document.head.querySelector(`#${id}`);
             if (!style) {
                 style = document.createElement('style');

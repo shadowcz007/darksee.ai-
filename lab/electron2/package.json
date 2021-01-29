@@ -4,8 +4,8 @@
         "name": "shadow",
         "email": "389570357@qq.com"
     },
-    "homepage": "https://js.tensorflow.org",
-    "version": "0.1.0",
+    "homepage": "http://mixlab.top",
+    "version": "0.1.1",
     "description": "knowledge engine",
     "license": "MIT",
     "repository": "https://github.com/shadowcz007/darksee.git",
@@ -26,10 +26,9 @@
         "gifuct-js": "^2.0.0",
         "is-url": "^1.2.4",
         "jimp": "^0.16.1",
-        "medium-editor": "^5.23.3",
+        "lowdb": "^1.0.0",
         "monaco-editor": "^0.21.2",
         "object-hash": "^2.1.1",
-        "sql.js": "^1.4.0",
         "text-multiclass-classification-tfjs": "git+https://github.com/shadowcz007/tfjs-text-multiclass-classification.git",
         "viewerjs": "^1.9.0"
     },
