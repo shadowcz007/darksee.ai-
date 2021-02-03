@@ -76,7 +76,6 @@ const AnyButton = require('editorjs-button');
 const KnowledgeCard = require("./src/editorjs-knowledge-card");
 // console.log(KnowledgeCard)
 const Pagination = require('./src/editorjs-pagination');
-const { rejects } = require('assert');
 
 let pagination = new Pagination({
     dbName: 'knowledgeCard'

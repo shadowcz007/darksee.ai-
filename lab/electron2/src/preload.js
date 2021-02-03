@@ -127,9 +127,7 @@ window.addEventListener('DOMContentLoaded', () => {
         backgroundColor: 'crimson',
         iconColor: '#fff',
         callback: (text, selection) => {
-            // console.log(selection)
-            // let tags = spider.getTags(text);
-            // console.log(tags)
+            //TODO 改造成收集
             ipcRenderer.send('save-knowledge', {
                 tags: [],
                 text: text,
