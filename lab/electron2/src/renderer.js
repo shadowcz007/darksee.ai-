@@ -1,5 +1,5 @@
 const path = require('path');
-const { ipcRenderer, clipboard } = require('electron');
+const { ipcRenderer, clipboard, remote } = require('electron');
 const hash = require('object-hash');
 
 // window.tfjs = require('@tensorflow/tfjs')
@@ -13,11 +13,16 @@ const bert = new Bert({
 bert.init();
 
 
+let mainWindow = (remote.getGlobal("_WINS")).mainWindow,
+    spiderWindow = (remote.getGlobal("_WINS")).spiderWindow;
+
 const { textTrain, TextModel, initEmbedding } = require("text-multiclass-classification-tfjs");
 initEmbedding(null, bert);
 const autoTagsModel = new TextModel(_MODEL_AUTOTAGS);
 
 const Db = require("./src/db");
+const search = require('./src/search');
+window.search = search;
 
 document.getElementById("info").innerText = `知识卡数量${Db.size()}`;
 
@@ -71,7 +76,6 @@ const Alert = require('editorjs-alert');
 const Checklist = require('@editorjs/checklist');
 const SimpleImage = require('@editorjs/simple-image');
 const Table = require('editorjs-table');
-const AnyButton = require('editorjs-button');
 
 const KnowledgeCard = require("./src/editorjs-knowledge-card");
 // console.log(KnowledgeCard)
@@ -125,15 +129,7 @@ const editor = new EditorJS({
                 cols: 3,
             },
         },
-        anyButton: {
-            class: AnyButton,
-            inlineToolbar: false,
-            config: {
-                css: {
-                    "btnColor": "btn--gray",
-                }
-            }
-        },
+
     },
     data: pagination.load(),
     onReady: () => {
@@ -159,9 +155,9 @@ class Knowledge {
         //保存知识卡片
     save(arg) {
         return new Promise((resolve, reject) => {
-            const { text, url, title, tags, urls, images, id, from } = arg;
+            const { text, tags, urls, images, id, from } = arg;
             let createTime = (new Date()).getTime();
-            let data = { tags, text, url, title, images, urls, createTime };
+            let data = { tags, text, images, urls, createTime };
             data.id = hash(data);
             if (this.knowledgeCardDataset[data.id]) return;
             // if (!isTargetHostNames[from]) {
@@ -222,17 +218,23 @@ class Knowledge {
     };
 }
 
+
+//知识，控制处理频率
 const kg = new Knowledge();
 
+//收集知识，接受
 ipcRenderer.on('save-knowledge', (event, arg) => {
-    // console.log(arg)
+    mainWindow = mainWindow || (remote.getGlobal("_WINS")).mainWindow;
+    spiderWindow = spiderWindow || (remote.getGlobal("_WINS")).spiderWindow;
+    mainWindow.show();
+    spiderWindow.hide();
     kg.add(arg);
 });
-ipcRenderer.on('save-knowledge-ready', (event, arg) => {
-    // editor.blocks.insert("paragraph", arg.data);
-    //editor.blocks.insert('knowledgeCard', arg.data);
-    console.log(arg)
-});
+// ipcRenderer.on('save-knowledge-ready', (event, arg) => {
+//     // editor.blocks.insert("paragraph", arg.data);
+//     //editor.blocks.insert('knowledgeCard', arg.data);
+//     console.log(arg)
+// });
 
 ipcRenderer.on('train-text-auto-tags-result', (event, arg) => {
     // editor.blocks.insert("paragraph", arg.data);

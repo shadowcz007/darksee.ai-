@@ -1,16 +1,16 @@
 const { ipcRenderer, remote } = require('electron');
 const Jimp = require('jimp');
-
-const mainWin = remote.getGlobal("mainWindow");
+const hash = require('object-hash');
 
 const Selection = require('./selection');
 const Spider = require('./spider');
-
-// const Gif = require('./gif');
-
 const xhrProxy = require('./xhr_proxy.js');
+
+let mainWin;
+
 //记录星球的话题id
 let topicIds = {};
+
 xhrProxy.addHandler(async function(xhr) {
     let data = null;
     let url = xhr.responseURL;
@@ -47,11 +47,7 @@ xhrProxy.addHandler(async function(xhr) {
                     let span = document.createElement("span");
                     span.innerText = title;
                     e.insertBefore(span, e.children.length > 0 ? e.children[0] : null);
-
-
-                    //console.log(e)
                 });
-                // console.log(div)
 
                 //images的处理
                 let images2 = Array.from(images, img => img.large);
@@ -68,14 +64,7 @@ xhrProxy.addHandler(async function(xhr) {
                         base64: base64
                     })
                 }
-                // console.log(imagesBase)
-                // nds.push({
-                //     id: t.topic_id,
-                //     text: div.innerText.trim(),
-                //     tags: tags,
-                //     urls: urls,
-                //     images: imagesBase
-                // });
+
                 topicIds[t.topic_id] = {
                     id: t.topic_id,
                     text: div.innerText.trim(),
@@ -90,22 +79,15 @@ xhrProxy.addHandler(async function(xhr) {
         // data = nds;
     };
 
-    // Array.from(data || [], d => {
-    //     ipcRenderer.send('save-knowledge', {
-    //         from: window.location.hostname,
-    //         tags: d.tags,
-    //         text: d.text,
-    //         url: d.urls && d.urls.length > 0 ? d.urls[0].url : null,
-    //         title: d.urls && d.urls.length > 0 ? d.urls[0].title : null,
-    //         urls: d.urls,
-    //         images: d.images
-    //     });
-    // });
     // console.log(topicIds)
+    updateTopicNumUI();
+});
+
+function updateTopicNumUI() {
     if (document.querySelector('.darksee_spider_window_button')) {
         document.querySelector('.darksee_spider_window_button').innerText = `收集${getTopicNum()}`;
     }
-});
+}
 
 function getTopicNum() {
     let topicIdsArray = [];
@@ -128,12 +110,26 @@ window.addEventListener('DOMContentLoaded', () => {
         iconColor: '#fff',
         callback: (text, selection) => {
             //TODO 改造成收集
-            ipcRenderer.send('save-knowledge', {
+            let kg = {
                 tags: [],
                 text: text,
-                url: window.location.href,
-                title: document.title.trim()
+                urls: [{
+                    url: window.location.href,
+                    title: document.title.trim()
+                }]
+            };
+            let id = hash(kg);
+
+            topicIds[id] = Object.assign(kg, {
+                id
             });
+            updateTopicNumUI();
+            // ipcRenderer.send('save-knowledge', {
+            //     tags: [],
+            //     text: text,
+            //     url: window.location.href,
+            //     title: document.title.trim()
+            // });
         }
     });
 
@@ -179,13 +175,12 @@ window.addEventListener('DOMContentLoaded', () => {
                 let topic = topicIds[id];
                 if (!topic.isSave) {
                     topicIds[id].isSave = true;
+                    mainWin = mainWin || (remote.getGlobal("_WINS")).mainWindow;
                     ipcRenderer.sendTo(mainWin.webContents.id, 'save-knowledge', topic);
                 }
             };
             document.querySelector('.darksee_spider_window_button').innerText = `收集${getTopicNum()}`;
         });
-
-
 
         document.body.appendChild(div);
     }
@@ -283,40 +278,24 @@ async function getBase64Async(src) {
                 url: src
             })
             .then(image => {
-                // console.log(image)
-                //TODO gif 有bug
-
                 if (image._originalMime == "image/gif") {
-                    // let fp = path.join(__dirname, "_" + (new Date()).getTime() + ".gif");
-                    // image.writeAsync(fp).then(() => {
-                    //     let base64 = decodeGif(fs.readFileSync(fp));
-                    //     resolve(base64)
-                    // });
-                    //console.log(image.bitmap)
                     fetchImage(src).then(buffer => {
                         resolve({
-                                type: image._originalMime,
-                                data: "data:image/gif;base64," + arrayBufferToBase64(buffer)
-                            })
-                            // let g = new Gif();
-                            // g.start(buff);
-                            // resolve(blob);
+                            type: image._originalMime,
+                            data: "data:image/gif;base64," + arrayBufferToBase64(buffer)
+                        });
                     })
-
                 } else {
                     image.getBase64Async(image._originalMime).then((base64) => {
                         resolve({
-                                type: image._originalMime,
-                                data: base64
-                            })
-                            // console.log(base64)
+                            type: image._originalMime,
+                            data: base64
+                        });
                     });
                 }
 
-
             })
             .catch(err => {
-                // Handle an exception.
                 reject();
             });
     });
@@ -329,7 +308,7 @@ function arrayBufferToBase64(buffer) {
     var bytes = new Uint8Array(buffer);
     for (var len = bytes.byteLength, i = 0; i < len; i++) {
         binary += String.fromCharCode(bytes[i]);
-    }
+    };
     //将二进制字符串转为base64字符串
     return window.btoa(binary);
 }

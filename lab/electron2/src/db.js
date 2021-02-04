@@ -19,7 +19,7 @@ const db = low(adapter)
 // db.update('count', n => n + 1)
 //   .write()
 
-
+window.db = db;
 
 class Db {
     constructor() {
@@ -31,13 +31,21 @@ class Db {
         this.key = "knowledges";
     }
 
-    check() {
+    check(data) {
         //校验数据
         // id: t.topic_id,
         // text: string,
         // tags: tags, {value,type}
         // urls: urls,
         // images: imagesBase
+
+        delete data.id;
+
+        data.id = hash(data);
+
+        if (!data.createTime) data = Object.assign(data, { createTime: (new Date()).getTime() })
+            //createTime
+        return data;
     }
 
     size() {
@@ -54,17 +62,20 @@ class Db {
 
     add(data = {}) {
         //校验
-        if (!data.id) return;
+        data = this.check(data);
+        // if (!data.id) return;
         if (this.get(data.id)) return;
         db.get(this.key)
             .push(data)
             .write();
     }
 
-
-    export () {
-
+    all() {
+        let res = [];
+        db.get(this.key).each(e => res.push(e)).value();
+        return res
     }
+
 }
 
 

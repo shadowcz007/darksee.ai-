@@ -4,94 +4,156 @@ const path = require('path');
 const fs = require("fs");
 const isUrl = require("is-url");
 
-let mainWindow, spiderWindow;
-let width, height;
+//全局变量
+global._WINS = {};
+
+const _PRELOAD_JS = path.join(__dirname, 'src/preload.js');
+
+
 let appIcon = null;
 let spiderUrl = null;
 
-global.mainWindow = null;
+
+const config = {
+    mainWindow: {
+        width: 800,
+        height: 600,
+        minHeight: 400,
+        minWidth: 500,
+        align: 'topLeft',
+        autosize: true,
+        title: "实验",
+        show: true,
+        closable: true,
+        resizable: true,
+        titleBarStyle: "default",
+        html: 'index.html'
+    },
+    spiderWindow: {
+        width: 800,
+        height: 600,
+        minHeight: 400,
+        minWidth: 500,
+        align: 'topRight',
+        autosize: true,
+        title: "预览",
+        show: false,
+        closable: false,
+        resizable: true,
+        titleBarStyle: "hiddenInset",
+        preload: _PRELOAD_JS
+    },
+    readWindow: {
+        width: 800,
+        height: 600,
+        minHeight: 400,
+        minWidth: 500,
+        align: 'topLeft',
+        title: "阅读",
+        show: false,
+        closable: true,
+        resizable: true,
+        titleBarStyle: "default",
+        // html: _READ_HTML
+    },
+}
+
 
 ipcMain.on('open-url', (event, arg) => {
     openUrl(arg.url);
 });
 
-function createWindow() {
-    // Create the browser window.
-    mainWindow = new BrowserWindow({
-        width: 960,
-        minWidth: 800,
-        minHeight: 600,
-        height: parseInt(height * 0.8),
-        x: 50,
-        y: parseInt(height * 0.1),
+
+function createWindow(key, opts, workAreaSize) {
+    // 创建GUI窗口
+    const win = new BrowserWindow({
+        width: opts.autosize === true ? parseInt(workAreaSize.width * 0.9) : opts.width,
+        height: opts.autosize === true ? workAreaSize.height : opts.height,
+        minHeight: opts.minHeight,
+        minWidth: opts.minWidth,
+        x: opts.align == "topRight" ? workAreaSize.width - opts.width : 0,
+        y: 0,
+        title: opts.title || "-",
         show: false,
+        closable: opts.closable,
+        resizable: opts.resizable,
+        titleBarStyle: opts.titleBarStyle,
         webPreferences: {
-            //preload: path.join(__dirname, 'src/preload.js'),
+            preload: opts.preload || "",
+            //开启nodejs支持
             nodeIntegration: true,
-            webSecurity: false,
-            // worldSafeExecuteJavaScript: true
+            //开启AI功能
+            experimentalFeatures: true,
+            //开启渲染进程调用remote
+            enableRemoteModule: true
         }
-    })
-
-    // and load the index.html of the app.
-    mainWindow.loadFile('index.html')
-
-    // Open the DevTools.
-    // mainWindow.webContents.openDevTools()
-    mainWindow.webContents.once("dom-ready", (event) => {
-        // console.log(event)
-        mainWindow.show(true);
     });
 
-    global.mainWindow = mainWindow;
+    // 加载xxx.html
+    if (opts.html && opts.html.match("https://")) {
+        win.loadURL(opts.html);
+    } else if (opts.html) {
+        win.loadFile(opts.html);
+    }
+
+    // 打开调试工具
+    if (process.env.NODE_ENV === 'development') win.webContents.openDevTools();
+    // console.log(opts)
+    win.webContents.once("dom-ready", () => {
+        opts.show === true ? win.show() : null;
+        opts.executeJavaScript ? win.webContents.executeJavaScript(opts.executeJavaScript, false) : null;
+    });
+    win.on("closed", () => {
+        for (const key in global._WINS) {
+            global._WINS[key].destroy()
+        };
+        app.quit();
+    });
+    global._WINS[key] = win;
+    return win;
 };
 
 
-function createSpiderWindow() {
-    // Create the browser window.
-    spiderWindow = new BrowserWindow({
-        width: parseInt(width - 960),
-        height: parseInt(height * 0.8),
-        x: 960,
-        y: parseInt(height * 0.1),
-        //show: false,
-        // closable: true,
-        // parent: mainWindow,
-        // modal: false,
-        webPreferences: {
-            preload: path.join(__dirname, 'src/preload.js'),
-            webSecurity: false,
-            //nodeIntegration: true,
-            //worldSafeExecuteJavaScript: true
-        }
-    });
+function initWindow() {
+    const workAreaSize = screen.getPrimaryDisplay().workAreaSize;
+    config.mainWindow.height = workAreaSize.height;
+    config.mainWindow.width = parseInt(workAreaSize.width * 0.8);
+    for (const key in config) {
+        if (!global._WINS[key]) createWindow(key, config[key], workAreaSize);
+    };
+};
 
-    // and load the index.html of the app.
-    //spiderWindow.loadFile('index.html')
-    spiderWindow.webContents.once("dom-ready", (event) => {
-        //注入js
-        //     spiderWindow.webContents.executeJavaScript(`${selection};
-        //    `);
-    });
-    spiderWindow.webContents.once('did-finish-load', () => {
 
-    })
-}
 
 function openUrl(url) {
-    console.log(url)
     if (isUrl(url) && url != spiderUrl) {
-        let isOpen = dialog.showMessageBoxSync(mainWindow, {
+        let isOpen = dialog.showMessageBoxSync(global._WINS.mainWindow, {
             type: "question",
             message: "是否打开新网站\n" + url,
             buttons: ["是", "否"]
         });
         if (isOpen === 0) {
-            if (!spiderWindow || (spiderWindow && spiderWindow.isDestroyed())) createSpiderWindow();
-            spiderWindow.loadURL(url);
+            global._WINS.spiderWindow.loadURL(url);
+            global._WINS.spiderWindow.webContents.once("dom-ready", () => {
+                global._WINS.spiderWindow.show();
+            });
+            global._WINS.mainWindow.hide();
             spiderUrl = url;
         };
         clipboard.clear();
+    };
+
+    if (isUrl(url) && url === global._WINS.spiderWindow.getURL()) {
+        let isOpen = dialog.showMessageBoxSync(global._WINS.mainWindow, {
+            type: "question",
+            message: "是否打开网站\n" + url,
+            buttons: ["是", "否"]
+        });
+        if (isOpen === 0) {
+            global._WINS.spiderWindow.show();
+            global._WINS.mainWindow.hide();
+        }
+
     }
 
 }
@@ -111,37 +173,21 @@ function createAppIcon() {
 
 }
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
+
 app.whenReady().then(() => {
     createAppIcon();
-
-    var size = screen.getPrimaryDisplay().workAreaSize;
-    width = size.width;
-    height = size.height;
-
-    createWindow();
+    initWindow();
     app.on('activate', function() {
-        // On macOS it's common to re-create a window in the app when the
-        // dock icon is clicked and there are no other windows open.
-        if (BrowserWindow.getAllWindows().length === 0) createWindow()
+        if (BrowserWindow.getAllWindows().length === 0) initWindow();
     })
 });
 
 app.on('browser-window-focus', (event, window) => {
-    // console.log(event, window)
     appIcon.popUpContextMenu();
-    let url = clipboard.readText();
-    openUrl(url);
+    openUrl(clipboard.readText());
 })
 
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
+
 app.on('window-all-closed', function() {
     if (process.platform !== 'darwin') app.quit()
 });
-
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and require them here.

@@ -31,28 +31,32 @@ class KnowledgeCard {
     render() {
         let div = document.createElement("div");
         div.className = 'editorjs-knowledge-card';
-        let title = document.createElement("h5");
-        title.className = `title`;
+
         let text = document.createElement("p");
         text.className = `text`;
         text.setAttribute("contenteditable", true);
+        text.innerText = this.data && this.data.text ? this.data.text : '';
 
         let images = document.createElement('div');
         images.className = "images";
         images.appendChild(this._createImages());
         const gallery = new Viewer(images);
 
-        div.appendChild(title);
         div.appendChild(text);
         div.appendChild(images);
+
+        Array.from(this.data.urls || [], u => {
+            let url = document.createElement("h5");
+            url.className = `title`;
+            url.innerText = u.title
+            url.setAttribute('data-url', u.url);
+            div.appendChild(url);
+        });
 
         let tagDiv = this._createTagsInput(this.data ? this.data.tags : null);
         div.appendChild(tagDiv);
 
-        title.innerText = this.data && this.data.title ? this.data.title : '';
-        text.innerText = this.data && this.data.text ? this.data.text : '';
-        div.setAttribute('data-url', this.data && this.data.url ? this.data.url : '');
-        div.setAttribute('data-vector', this.data && this.data.vector ? this.data.vector : '');
+        //div.setAttribute('data-vector', this.data && this.data.vector ? this.data.vector : '');
 
         return div;
     }

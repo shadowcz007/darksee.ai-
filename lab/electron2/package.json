@@ -5,7 +5,7 @@
         "email": "389570357@qq.com"
     },
     "homepage": "http://mixlab.top",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "description": "knowledge engine",
     "license": "MIT",
     "repository": "https://github.com/shadowcz007/darksee.git",
@@ -20,8 +20,8 @@
         "@yaireo/tagify": "^3.22.0",
         "bert": "git+https://github.com/shadowcz007/tfjs-bert-zh.git",
         "editorjs-alert": "^1.0.3",
-        "editorjs-button": "^1.0.3",
         "editorjs-table": "^1.4.9",
+        "flexsearch": "^0.6.32",
         "gif.js": "git+https://github.com/jnordberg/gif.js.git",
         "gifuct-js": "^2.0.0",
         "is-url": "^1.2.4",
@@ -38,7 +38,7 @@
     },
     "main": "main.js",
     "scripts": {
-        "start": "electron ."
+        "start": "NODE_ENV=development electron ."
     },
     "build": {
         "linux": {
