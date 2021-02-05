@@ -78,7 +78,11 @@ const SimpleImage = require('@editorjs/simple-image');
 const Table = require('editorjs-table');
 
 const KnowledgeCard = require("./src/editorjs-knowledge-card");
-// console.log(KnowledgeCard)
+KnowledgeCard.prototype.onSearchBtnEvent = function(e) {
+    console.log(e)
+}
+
+
 const Pagination = require('./src/editorjs-pagination');
 
 let pagination = new Pagination({
@@ -93,7 +97,10 @@ const editor = new EditorJS({
     holder: 'container',
     autofocus: true,
     tools: {
-        knowledgeCard: KnowledgeCard,
+        knowledgeCard: {
+            class: KnowledgeCard,
+            inlineToolbar: true
+        },
         header: {
             class: Header,
             shortcut: 'CMD+SHIFT+H',
@@ -137,6 +144,7 @@ const editor = new EditorJS({
     },
     onChange: () => { console.log('Now I know that Editor\'s content changed!') }
 });
+
 
 
 let saveKs = [];

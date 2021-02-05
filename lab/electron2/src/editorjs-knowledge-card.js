@@ -28,41 +28,67 @@ class KnowledgeCard {
 
     }
 
+    static get toolbox() {
+        return {
+            title: 'Knowledge',
+            icon: '<svg width="17" height="15" viewBox="0 0 336 276" xmlns="http://www.w3.org/2000/svg"><path d="M291 150V79c0-19-15-34-34-34H79c-19 0-34 15-34 34v42l67-44 81 72 56-29 42 30zm0 52l-43-30-56 30-81-67-66 39v23c0 19 15 34 34 34h178c17 0 31-13 34-29zM79 0h178c44 0 79 35 79 79v118c0 44-35 79-79 79H79c-44 0-79-35-79-79V79C0 35 35 0 79 0z"/></svg>'
+        };
+    }
+
     render() {
+
         let div = document.createElement("div");
         div.className = 'editorjs-knowledge-card';
 
-        let text = document.createElement("p");
-        text.className = `text`;
-        text.setAttribute("contenteditable", true);
-        text.innerText = this.data && this.data.text ? this.data.text : '';
+        if (!this.data) return div;
 
-        let images = document.createElement('div');
-        images.className = "images";
-        images.appendChild(this._createImages());
-        const gallery = new Viewer(images);
+        let { text, images, urls, tags } = this.data;
 
-        div.appendChild(text);
-        div.appendChild(images);
 
-        Array.from(this.data.urls || [], u => {
-            let url = document.createElement("h5");
-            url.className = `title`;
-            url.innerText = u.title
-            url.setAttribute('data-url', u.url);
-            div.appendChild(url);
-        });
+        if (text) {
+            let textDom = document.createElement("p");
+            textDom.className = `text`;
+            textDom.setAttribute("contenteditable", true);
+            textDom.innerText = text || '';
+            div.appendChild(textDom);
+        };
 
-        let tagDiv = this._createTagsInput(this.data ? this.data.tags : null);
-        div.appendChild(tagDiv);
+        if (images) {
+            let imagesDom = document.createElement('div');
+            imagesDom.className = "images";
+            imagesDom.appendChild(this._createImages(images));
+            this.gallery = new Viewer(imagesDom);
+            div.appendChild(imagesDom);
+        };
 
-        //div.setAttribute('data-vector', this.data && this.data.vector ? this.data.vector : '');
+        if (urls) {
+            Array.from(urls || [], u => {
+                let url = document.createElement("h5");
+                url.className = `title`;
+                url.innerText = u.title
+                url.setAttribute('data-url', u.url);
+                div.appendChild(url);
+            });
+        }
+
+        div.appendChild(
+            this._createTagsInput(tags)
+        );
+
 
         return div;
     }
-    _createImages() {
+
+    _createButton() {
+        let btn = document.createElement('button');
+        btn.innerText = "💡";
+        btn.addEventListener('click', this.onSearchBtnEvent);
+        return btn
+    }
+
+    _createImages(images) {
         let div = document.createDocumentFragment();
-        let imgs = this.data && this.data.images ? this.data.images : [];
+        let imgs = images || [];
         // console.log(imgs)
         Array.from(imgs, img => {
             let im = new Image();
@@ -74,8 +100,8 @@ class KnowledgeCard {
         return div
     }
     _createTagsInput(tagsObj) {
-            console.log('_createTagsInput', tagsObj)
-                // let tags = Array.from(tagsObj, t => t.value);
+            // console.log('_createTagsInput', tagsObj)
+            // let tags = Array.from(tagsObj, t => t.value);
             let div = document.createElement("div");
             div.className = "tags";
             let input = document.createElement("input");
@@ -98,12 +124,18 @@ class KnowledgeCard {
                 }
             });
 
-            tagify.addTags(Array.from(tagsObj, t => {
-                return {
-                    value: t.value,
-                    color: t.type == 0 ? "blue" : "gray"
-                }
-            }))
+            if (tagsObj) {
+                //有标签，只显示
+                tagify.addTags(Array.from(tagsObj, t => {
+                    return {
+                        value: t.value,
+                        color: t.type == 0 ? "blue" : "gray"
+                    }
+                }))
+            } else {
+                //没标签，是搜索工具
+                div.append(this._createButton());
+            }
 
             button.addEventListener("click", onAddButtonClick)
 
@@ -114,8 +146,6 @@ class KnowledgeCard {
             function onInvalidTag(e) {
                 console.log("invalid", e.detail)
             }
-
-
 
             return div
 
@@ -259,23 +289,17 @@ class KnowledgeCard {
         let tags = blockContent.querySelectorAll("tag");
         tags = Array.from(tags, t => t.innerText.trim());
         let {
-            title,
-            text,
-            url,
             createTime,
-            vector,
             urls,
             images,
             id
         } = this.data;
-        // console.log(tags.innerText)
-        text = blockContent.querySelector(".text").innerText.trim();
+
+        let text = blockContent.querySelector(".text").innerText.trim();
+
         return {
-            title,
             text,
-            url,
             createTime,
-            vector,
             tags,
             id,
             urls: urls,

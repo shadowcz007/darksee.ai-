@@ -8,7 +8,7 @@ const isUrl = require("is-url");
 global._WINS = {};
 
 const _PRELOAD_JS = path.join(__dirname, 'src/preload.js');
-
+const _READ_HTML = path.join(__dirname, "src/read.html");
 
 let appIcon = null;
 let spiderUrl = null;
