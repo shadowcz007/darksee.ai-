@@ -68,7 +68,6 @@ async function autoTags(arg) {
     // event.send
 };
 
-
 const EditorJS = require('@editorjs/editorjs');
 const Paragraph = require('@editorjs/paragraph');
 const Header = require('@editorjs/header');
@@ -238,10 +237,25 @@ ipcRenderer.on('save-knowledge', (event, arg) => {
     spiderWindow.hide();
     kg.add(arg);
 });
-// ipcRenderer.on('save-knowledge-ready', (event, arg) => {
-//     // editor.blocks.insert("paragraph", arg.data);
-//     //editor.blocks.insert('knowledgeCard', arg.data);
-//     console.log(arg)
+
+// ipcRenderer.on('open-file', (event, arg) => {
+//     // console.log(arg)
+//     remote.dialog.showOpenDialog({
+//         title: '打开',
+//         filters: [
+//             { name: '文件', extensions: ['pdf', 'jpg', 'png', 'gif'] }
+//         ],
+//         buttonLabel: '确定',
+//         properties: ['openFile'],
+//         message: '打开文件'
+//     }).then(result => {
+//         // console.log(result.canceled)
+//         if(result.filePaths.length>0){
+
+//         }
+//     }).catch(err => {
+//         console.log(err)
+//     })
 // });
 
 ipcRenderer.on('train-text-auto-tags-result', (event, arg) => {
