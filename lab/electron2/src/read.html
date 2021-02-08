@@ -22,15 +22,23 @@
             width: 50%;
         }
         
+        #btns {
+            position: fixed;
+            bottom: 18px;
+            z-index: 9999;
+            width: 50%;
+            text-align: center;
+            left: 0;
+        }
+        
         #my-note {
-            width: calc(50% - 24px);
-            height: 100vh;
+            width: 100%;
             background-color: #eee;
             outline: none;
-            position: fixed;
+            /* position: fixed; */
             padding: 24px;
-            top: 0;
-            right: 0;
+            /* top: 0; */
+            /* right: 0; */
             overflow-y: scroll;
         }
         
@@ -68,27 +76,34 @@
 
 <body>
     <main>
-
+        <div id="btns">
+            <button id="zoomIn">+</button>
+            <button id="zoomOut">-</button>
+        </div>
         <div id="pageContainer">
             <div id="viewer" class="pdfViewer"></div>
         </div>
 
-        <div id="my-note" contenteditable></div>
+        <div style="height: 100vh;">
+            <div id="my-note-en" style="height: 50vh;
+            /* width: 100%; */
+            background: #e4e4e4;
+            /* padding: 24px; */
+            overflow: scroll;">
+
+            </div>
+
+            <iframe src="./googleTranslate.html" style="outline: none;
+            border: none;" id="my-note"></iframe>
+        </div>
 
 
 
     </main>
 
     <script type="text/javascript">
-        function googleTranslateElementInit() {
-            window.g = new google.translate.TranslateElement({
-                    pageLanguage: 'en',
-                    layout: google.translate.TranslateElement.InlineLayout.Cj
-                },
-                'my-note');
-        }
-
         const path = require('path');
+        const hash = require('object-hash');
         const pdfjsLib = require("pdfjs-dist");
         // console.log(pdfjsLib)
 
@@ -101,6 +116,8 @@
         // var SVG_NS = "http://www.w3.org/2000/svg";
 
         pdfjsLib.GlobalWorkerOptions.workerSrc = path.join(__dirname, "../node_modules/pdfjs-dist/build/pdf.worker.js");
+
+
         // console.log(pdfjsLib.GlobalWorkerOptions.workerSrc)
         //字典，存储英中结果
         // let textsMap={};
@@ -266,12 +283,14 @@
 
         // Loading document.
         function loadDoc(filePath) {
+
             var loadingTask = pdfjsLib.getDocument({
                 url: filePath,
                 cMapUrl: CMAP_URL,
                 cMapPacked: CMAP_PACKED,
             });
             loadingTask.promise.then(function(pdfDocument) {
+                localStorage.setItem("pdfDocument", filePath);
                 pdfViewer.setDocument(pdfDocument);
                 pdfLinkService.setDocument(pdfDocument, null);
             });
@@ -306,23 +325,28 @@
         };
 
 
+        window.preTextId = null;
+
         //屏幕取词
         function getSelectionWords(isDb) {
             var selection = document.getSelection();
             if (selection.toString() === '') return;
 
-            let text = document.createElement('p');
-            text.innerText = selection.toString();
-            text.className = 'note-text';
-
+            let text = selection.toString();
             if (isDb) {
                 let textLayer = selection.anchorNode.parentElement;
-                text.innerText = textLayer.innerText;
-            }
-            // console.log(isDb,selection.toString(),selection.anchorNode.parentElement);
+                text = textLayer.innerText;
+            };
 
-            Array.from(document.querySelectorAll("#my-note .note-text"), t => t.remove());
-            document.querySelector("#my-note").appendChild(text);
+            let id = hash([text]);
+            if (window.preTextId !== id) {
+                window.preTextId = id;
+
+                document.querySelector("#my-note-en").innerText = text;
+                // console.log(isDb,selection.toString(),selection.anchorNode.parentElement);
+                document.querySelector("#my-note").contentWindow.postMessage(`note_ms_${text}`);
+            }
+
 
         };
 
@@ -340,6 +364,13 @@
         document.querySelector("#viewer").addEventListener("dblclick", () => {
             getSelectionWords(true)
         }, false);
+
+
+
+        setTimeout(() => {
+            let pdfDocument = localStorage.getItem("pdfDocument");
+            if (!!pdfDocument) loadDoc(pdfDocument);
+        }, 1000)
     </script>
 
 </body>

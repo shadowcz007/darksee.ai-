@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script type="text/javascript" src="https://translate.google.cn/translate_a/element.js?cb=googleTranslateElementInit"></script>
+    <style>
+        .skiptranslate {
+            display: none!important
+        }
+        
+        iframe {
+            display: none!important
+        }
+        /*.goog-te-spinner-pos {
+            display: none!important
+        }
+        
+        #goog-gt-tt {
+            display: none!important
+        }*/
+    </style>
+</head>
+
+<body style="margin: 0;
+padding: 0;">
+
+    <main id="my-note" contenteditable style="height: 100vh;
+    /* width: 100%; */
+    background: #e4e4e4;
+    padding: 24px;">
+
+    </main>
+    <script type="text/javascript">
+        function googleTranslateElementInit() {
+            //console.log("-----")
+            window.g = new google.translate.TranslateElement({
+                    pageLanguage: 'en',
+                    layout: google.translate.TranslateElement.InlineLayout.Cj
+                },
+                'my-note');
+
+        };
+
+        document.querySelector('#my-note').addEventListener('change', e => {
+            console.log(document.querySelector('#my-note').innerHTML)
+        });
+
+        let iframe;
+
+        window.addEventListener('message', function(event) {
+            //console.log(iframe)
+            //autoOn();
+            iframe = iframe || Array.from(document.querySelectorAll("iframe"), f => f).filter(f => f.className.match('goog-te-banner-frame'))[0];
+            if (iframe) Array.from(iframe.contentDocument.images, img => img.remove());
+            let data = event.data.split("_ms_");
+            autoOn();
+            if (data[0] === "note") {
+                let text = document.createElement('p');
+                text.innerText = data[1].trim();
+                text.className = 'note-text';
+
+                Array.from(document.querySelectorAll("#my-note .note-text"), t => t.remove());
+                document.querySelector("#my-note").appendChild(text);
+
+
+
+            } else if (data[0] === "on" && iframe) {
+
+                //翻译开启 
+                Array.from(iframe.contentDocument.querySelectorAll('.goog-te-button button'), b => b).filter(b => b.id.match('confirm'))[0].click()
+
+            } else if (data[0] === "off" && iframe) {
+                //翻译 关闭
+                Array.from(iframe.contentDocument.querySelectorAll('.goog-te-button button'), b => b).filter(b => b.id.match('cancel'))[0].click()
+            }
+
+        });
+
+        function autoOn() {
+
+            iframe = iframe || Array.from(document.querySelectorAll("iframe"), f => f).filter(f => f.className.match('goog-te-banner-frame'))[0];
+            //if (iframe) Array.from(iframe.contentDocument.images, img => img.remove());
+            //if (!iframe) setTimeout(autoOn, 1000);
+            let btn = Array.from(iframe.contentDocument.querySelectorAll('.goog-te-button button'), b => b).filter(b => b.id.match('confirm'))[0];
+            if (btn) {
+                //btn.setAttribute
+                btn.click();
+                console.log("----click-00000-----")
+            }
+        };
+
+        //autoOn();
+    </script>
+</body>
+
+</html>

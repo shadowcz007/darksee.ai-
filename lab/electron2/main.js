@@ -60,7 +60,8 @@ const config = {
         closable: true,
         resizable: true,
         titleBarStyle: "default",
-        // html: _READ_HTML
+        preload: _PRELOAD_JS
+            // html: _READ_HTML
     },
 }
 
