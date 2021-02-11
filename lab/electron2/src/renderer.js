@@ -141,7 +141,10 @@ const editor = new EditorJS({
     onReady: () => {
         console.log('Editor.js is ready to work!')
     },
-    onChange: () => { console.log('Now I know that Editor\'s content changed!') }
+    onChange: (e) => {
+        console.log('Now I know that Editor\'s content changed!', e);
+
+    }
 });
 
 
@@ -340,37 +343,108 @@ window._test = function(text) {
 //     }
 // });
 
-// function openUrl(url) {
-//     ipcRenderer.send('open-url', { url: url });
-// };
 
-// document.querySelector("#get-clipboard").addEventListener("click", e => {
-//     e.preventDefault();
-//     let url = clipboard.readText();
-//     openUrl(url);
-// });
 
-document.querySelector("#save-all").addEventListener("click", async e => {
-    e.preventDefault();
-    let res = await editor.save();
-    localStorage.setItem("knowledgeCard", JSON.stringify(res));
-    console.log(res)
-})
 
-document.querySelector("#train").addEventListener("click", async e => {
-    e.preventDefault();
-    let res = await editor.save();
-    let blocks = res.blocks.filter(b => b.type == "knowledgeCard");
-    // console.log(blocks)
-    let dataset = [];
-    Array.from(blocks, b => {
-        b.data.tags.forEach(t => {
-            dataset.push({
-                label: t.value,
-                text: b.data.text.replace(/\s|\n/ig, "")
+
+class GUI {
+    constructor() {
+        this.searchInput = document.querySelector('#search-input');
+        this.addBtn = document.querySelector('#add-btn');
+        this.newBtn = document.querySelector('#new-btn');
+        this.saveBtn = document.querySelector("#save-all-btn");
+        this.trainBtn = document.querySelector("#train-btn");
+
+        this.publicBtn = document.querySelector('#public-btn');
+
+        // document.querySelector("#get-clipboard")
+
+        this.keyword = null;
+
+        this.init();
+    }
+    init() {
+
+        this.addClickEvent(this.addBtn, e => this.searchKnowledgeAndInsert());
+
+        this.addClickEvent(this.newBtn, e => {
+            if (this.keyword) editor.clear();
+            this.searchKnowledgeAndInsert();
+        });
+
+        this.addClickEvent(this.saveBtn, e => this.saveKnowledgeSet());
+
+        this.addClickEvent(this.trainBtn, e => this.train());
+
+        this.addClickEvent(this.publicBtn, e => this.public());
+
+    }
+
+    public() {
+        let data = editor.save();
+        console.log(data)
+    }
+
+    getKeyword() {
+        this.keyword = this.searchInput.value.trim();
+        console.log(this.keyword)
+    }
+
+    openFromClipboard() {
+        let url = clipboard.readText();
+        this.openUrl(url.trim());
+    }
+    openUrl(url) {
+        ipcRenderer.send('open-url', { url: url });
+    }
+
+    async train() {
+            let data = Db.all();
+            // let res = await editor.save();
+            // let blocks = res.blocks.filter(b => b.type == "knowledgeCard");
+            // // console.log(blocks)
+            let dataset = [];
+            Array.from(data, d => {
+                d.tags.forEach(t => {
+                    if (t.type === 0) dataset.push({
+                        label: t.value,
+                        text: d.text.replace(/\s|\n/ig, "")
+                    })
+                })
             })
-        })
-    })
-    console.log(dataset)
-    ipcRenderer.send('train-text-auto-tags', { dataset: dataset });
-});
+            console.log(dataset)
+                // ipcRenderer.send('train-text-auto-tags', { dataset: dataset });
+        }
+        //保存知识卡
+    saveKnowledgeCard() {
+
+        }
+        //保存知识集合
+    async saveKnowledgeSet() {
+            // TODO dialog.save file
+            let res = await editor.save();
+            localStorage.setItem("knowledgeCard", JSON.stringify(res));
+            console.log(res)
+        }
+        //搜索知识
+    searchKnowledgeAndInsert() {
+        this.getKeyword();
+        if (this.keyword) {
+            search.find(this.keyword).then(res => {
+                console.log(res)
+                Array.from(res, r => {
+                    editor.blocks.insert('knowledgeCard', r);
+                });
+            });
+        }
+    }
+    addClickEvent(dom, fn, event = 'click') {
+        dom.addEventListener(event, e => {
+            e.stopPropagation();
+            e.preventDefault();
+            fn(e);
+        });
+    }
+}
+
+const gui = new GUI();

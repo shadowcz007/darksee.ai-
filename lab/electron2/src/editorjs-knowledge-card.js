@@ -6,7 +6,7 @@ let viewerCss = fs.readFileSync(path.join(__dirname, "../node_modules/viewerjs/d
 viewerCss = window.URL.createObjectURL(new Blob([viewerCss], { type: "text/css" }));
 
 
-const Tagify = require("@yaireo/tagify");
+const _createTagsInput = require("./tags");
 // console.log(viewerCss)
 
 
@@ -71,10 +71,12 @@ class KnowledgeCard {
             });
         }
 
+        let { div: tagsInput, tagify } = _createTagsInput(tags);
         div.appendChild(
-            this._createTagsInput(tags)
+            tagsInput
         );
 
+        this.tagify = tagify;
 
         return div;
     }
@@ -87,75 +89,74 @@ class KnowledgeCard {
     }
 
     _createImages(images) {
-        let div = document.createDocumentFragment();
-        let imgs = images || [];
-        // console.log(imgs)
-        Array.from(imgs, img => {
-            let im = new Image();
-            im.src = img.url || img.base64;
-            im.title = img.title || "IMG";
-            im.className = "image";
-            div.appendChild(im);
-        });
-        return div
-    }
-    _createTagsInput(tagsObj) {
-            // console.log('_createTagsInput', tagsObj)
-            // let tags = Array.from(tagsObj, t => t.value);
-            let div = document.createElement("div");
-            div.className = "tags";
-            let input = document.createElement("input");
-            input.setAttribute("placeholder", 'ffff');
-            input.className = "customLook";
-            // input.value = tags;
-            let button = document.createElement("button");
-            button.innerText = "+";
-            div.appendChild(input);
-            div.appendChild(button);
-
-            let tagify = new Tagify(input, {
-                //whitelist: Array.from(tagsObj.filter(t => t.type === 0), t => t.value),
-                callbacks: {
-                    "invalid": onInvalidTag
-                },
-                dropdown: {
-                    position: 'text',
-                    enabled: 1 // show suggestions dropdown after 1 typed character
-                }
+            let div = document.createDocumentFragment();
+            let imgs = images || [];
+            // console.log(imgs)
+            Array.from(imgs, img => {
+                let im = new Image();
+                im.src = img.url || img.base64;
+                im.title = img.title || "IMG";
+                im.className = "image";
+                div.appendChild(im);
             });
-
-            if (tagsObj) {
-                //有标签，只显示
-                tagify.addTags(Array.from(tagsObj, t => {
-                    return {
-                        value: t.value,
-                        color: t.type == 0 ? "blue" : "gray"
-                    }
-                }))
-            } else {
-                //没标签，是搜索工具
-                div.append(this._createButton());
-            }
-
-            button.addEventListener("click", onAddButtonClick)
-
-            function onAddButtonClick() {
-                tagify.addEmptyTag()
-            }
-
-            function onInvalidTag(e) {
-                console.log("invalid", e.detail)
-            }
-
             return div
-
         }
-        /*
-         * 动态添加 CSS 样式
-         * @param selector {string} 选择器
-         * @param rules    {string} CSS样式规则
-         * @param index    {number} 插入规则的位置, 靠后的规则会覆盖靠前的，默认在后面插入
-         */
+        // _createTagsInput(tagsObj) {
+        //         let div = document.createElement("div");
+        //         div.className = "tags";
+        //         let input = document.createElement("input");
+        //         input.setAttribute("placeholder", 'ffff');
+        //         input.className = "customLook";
+        //         // input.value = tags;
+        //         let button = document.createElement("button");
+        //         button.innerText = "+";
+        //         div.appendChild(input);
+        //         div.appendChild(button);
+
+    //         let tagify = new Tagify(input, {
+    //             callbacks: {
+    //                 "invalid": onInvalidTag,
+    //             },
+    //             dropdown: {
+    //                 position: 'text',
+    //                 enabled: 1
+    //             }
+    //         });
+
+    //         if (tagsObj) {
+    //             //有标签，只显示
+    //             tagify.addTags(Array.from(tagsObj, t => {
+    //                 return {
+    //                     value: t.value,
+    //                     color: t.type == 0 ? "blue" : "gray"
+    //                 }
+    //             }))
+    //         } else {
+    //             //没标签，是搜索工具
+    //             div.append(this._createButton());
+    //         }
+
+    //         button.addEventListener("click", onAddButtonClick)
+
+    //         function onAddButtonClick() {
+    //             tagify.addEmptyTag()
+    //         }
+
+    //         function onInvalidTag(e) {
+    //             console.log("invalid", e.detail)
+    //         }
+
+    //         this.tagify = tagify;
+
+    //         return div
+
+    //     }
+    /*
+     * 动态添加 CSS 样式
+     * @param selector {string} 选择器
+     * @param rules    {string} CSS样式规则
+     * @param index    {number} 插入规则的位置, 靠后的规则会覆盖靠前的，默认在后面插入
+     */
     _addCssRule(selector, rules, index) {
         let that = this;
         index = index || 0;
@@ -286,8 +287,15 @@ class KnowledgeCard {
         display: none;`);
     }
     save(blockContent) {
-        let tags = blockContent.querySelectorAll("tag");
-        tags = Array.from(tags, t => t.innerText.trim());
+        // let tags = blockContent.querySelectorAll("tag");
+        let tags = Array.from(this.tagify.value, v => {
+                return {
+                    value: v.value.trim(),
+                    type: v.color == 'blue' ? 0 : 1
+                }
+            })
+            // console.log(tags)
+            // tags = Array.from(tags, t => t.innerText.trim());
         let {
             createTime,
             urls,

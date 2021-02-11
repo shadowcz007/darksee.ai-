@@ -15,6 +15,7 @@ global._READ_WINS = [];
 
 const _PRELOAD_JS = path.join(__dirname, 'src/preload.js');
 const _READ_HTML = path.join(__dirname, "src/read.html");
+const _K_HTML = path.join(__dirname, "src/knowledge.html");
 
 let appIcon = null;
 let spiderUrl = null;
@@ -63,6 +64,19 @@ const config = {
         preload: _PRELOAD_JS
             // html: _READ_HTML
     },
+    knowledgeWindow: {
+        width: 800,
+        height: 600,
+        minHeight: 400,
+        minWidth: 500,
+        align: 'topLeft',
+        title: "阅读",
+        show: false,
+        closable: true,
+        resizable: true,
+        titleBarStyle: "default",
+        html: _K_HTML
+    }
 }
 
 
@@ -238,10 +252,11 @@ function initMenu() {
                 },
                 { type: 'separator' },
                 {
-                    label: '编辑',
+                    label: '管理知识库',
                     accelerator: 'CmdOrCtrl+E',
-                    click: () => global._WINS.mainWindow.webContents.send('edit-file', { hardReadOnly: false })
+                    click: () => global._WINS.knowledgeWindow.webContents.send('open')
                 },
+                { type: 'separator' },
                 {
                     label: '发布',
                     accelerator: 'CmdOrCtrl+P',
@@ -367,7 +382,7 @@ app.whenReady().then(() => {
 });
 
 app.on('browser-window-focus', (event, window) => {
-    appIcon.popUpContextMenu();
+    //appIcon.popUpContextMenu();
     openUrl(clipboard.readText());
 })
 

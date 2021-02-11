@@ -38,13 +38,13 @@ class Db {
         // tags: tags, {value,type}
         // urls: urls,
         // images: imagesBase
-
+        delete data.createTime;
         delete data.id;
 
-        data.id = hash(data);
+        let id = hash(data);
 
-        if (!data.createTime) data = Object.assign(data, { createTime: (new Date()).getTime() })
-            //createTime
+        data = Object.assign(data, { id: id, createTime: (new Date()).getTime() });
+
         return data;
     }
 

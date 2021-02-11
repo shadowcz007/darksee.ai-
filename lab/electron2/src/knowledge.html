@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>知识库</title>
+
+    <script src="../node_modules/jsuites/dist/jsuites.js"></script>
+    <link rel="stylesheet" href="../node_modules/jsuites/dist/jsuites.css" type="text/css" />
+
+    <script src="../node_modules/jexcel/dist/jexcel.js"></script>
+    <link rel="stylesheet" href="../node_modules/jexcel/dist/jexcel.css" type="text/css" />
+
+    <link rel="stylesheet" href="../node_modules/@yaireo/tagify/dist/tagify.css">
+    <style>
+        .customLook {
+            --tag-bg: #0052BF;
+            --tag-hover: #CE0078;
+            --tag-text-color: #FFF;
+            --tags-border-color: silver;
+            --tag-text-color--edit: #111;
+            --tag-remove-bg: var(--tag-hover);
+            --tag-pad: .6em 1em;
+            --tag-inset-shadow-size: 1.3em;
+            --tag-remove-btn-bg--hover: black;
+            display: inline-block;
+            min-width: 0;
+            border: none;
+        }
+        
+        .customLook .tagify__tag {
+            margin-top: 0;
+            cursor: pointer;
+        }
+        
+        .customLook .tagify__tag[color=gray] {
+            --tag-bg: red
+        }
+        
+        .customLook .tagify__tag>div {
+            border-radius: 25px;
+        }
+        
+        .customLook .tagify__tag>div>* {
+            white-space: nowrap;
+        }
+        
+        .customLook .tagify__tag:only-of-type .tagify__tag__removeBtn {
+            display: none;
+        }
+        
+        .customLook .tagify__tag__removeBtn {
+            opacity: 0;
+            transform: translateX(-6px) scale(.5);
+            margin-left: -3ch;
+            transition: .12s;
+        }
+        
+        .customLook .tagify__tag:hover .tagify__tag__removeBtn {
+            transform: none;
+            opacity: 1;
+            margin-left: -1ch;
+        }
+        
+        .customLook+button {
+            color: #0052BF;
+            font: bold 1.4em/1.65 Arial;
+            border: 0;
+            background: none;
+            box-shadow: 0 0 0 2px inset currentColor;
+            border-radius: 50%;
+            width: 1.65em;
+            height: 1.65em;
+            cursor: pointer;
+            outline: none;
+            transition: .1s ease-out;
+            margin: 0 0 0 5px;
+            vertical-align: top
+        }
+        
+        .customLook+button:hover {
+            box-shadow: 0 0 0 5px inset currentColor;
+        }
+        
+        .customLook .tagify__input {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="spreadsheet"></div>
+
+    <script type="text/javascript">
+        const {
+            ipcRenderer,
+            remote
+        } = require('electron');
+        const _createTagsInput = require("./tags");
+        const Db = require("./db");
+
+        let win = remote.getGlobal('_WINS').knowledgeWindow;
+        ipcRenderer.on('open', (event, arg) => {
+            win.show();
+            open();
+        });
+
+        function open() {
+            let data = Db.all();
+            //console.log(data)
+
+            data = Array.from(data, d => [
+                d.text,
+                JSON.stringify(d.tags),
+                (new Date(d.createTime)).toISOString(),
+                d.id,
+                d.images && d.images.length > 0 ? Array.from(d.images, img => img.base64) : '',
+                d.urls && d.urls.length > 0 ? d.urls[0].url : ''
+            ]);
+
+
+
+            var customColumn = {
+                createCell: (cell) => {
+                    let tags = JSON.parse(cell.innerText);
+
+                    let {
+                        div
+                    } = _createTagsInput(tags);
+                    cell.innerHTML = "";
+                    cell.appendChild(div);
+                    console.log(cell)
+                    return cell
+                },
+                // Methods
+                closeEditor: function(cell, save) {
+                    return;
+                },
+                openEditor: function(cell) {
+                    return
+                },
+
+                getValue: function(cell) {
+                    console.log(cell)
+                    return cell.innerHTML;
+                },
+                setValue: function(cell, value) {
+                    console.log(cell, value)
+                    cell.innerHTML = value;
+                }
+            }
+
+            var myTable = jexcel(document.getElementById('spreadsheet'), {
+                data: data,
+                columns: [{
+                    type: 'text',
+                    title: '正文',
+                    width: 320
+                }, {
+                    //type: 'html',
+                    stripHTML: false,
+                    title: '标签',
+                    width: 200,
+                    editor: customColumn
+                }, {
+                    type: 'calendar',
+                    title: '创建日期',
+                    width: 200
+                }, {
+                    type: 'text',
+                    title: 'id',
+                    width: 120
+                }, {
+                    type: 'html',
+                    title: '图片',
+                    width: 120
+                }, {
+                    type: 'html',
+                    title: '链接',
+                    width: 80
+                }]
+            });
+        }
+    </script>
+    <!-- <script src="./src/knowledge.js"></script> -->
+</body>
+
+</html>
