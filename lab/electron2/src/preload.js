@@ -108,7 +108,20 @@ window.addEventListener('DOMContentLoaded', () => {
     let selection = new Selection({
         backgroundColor: 'crimson',
         iconColor: '#fff',
-        callback: (text, selection) => {
+        callback: async(text, image) => {
+            console.log(text, image)
+                //支持图片
+            let imagesBase = [];
+            if (image) {
+                let res = await getBase64Async(image.url);
+
+                imagesBase.push({
+                    title: '',
+                    type: res.type,
+                    base64: res.data
+                })
+            }
+
             //TODO 改造成收集
             let kg = {
                 tags: [],
@@ -116,7 +129,8 @@ window.addEventListener('DOMContentLoaded', () => {
                 urls: [{
                     url: window.location.href,
                     title: document.title.trim()
-                }]
+                }],
+                images: imagesBase
             };
             let id = hash(kg);
 
@@ -254,23 +268,10 @@ ipcRenderer.on('bert-similar-reply', (event, arg) => {
     })
 });
 
-async function fetchImage(url) {
-    return new Promise((resolve, reject) => {
 
-        fetch(url, {
-            method: 'get',
-            responseType: 'arraybuffer'
-        }).then(res => {
-            return res.arrayBuffer();
-        }).then(arraybuffer => {
-            resolve(arraybuffer);
-        })
-    })
-
-}
-
-
-
+/**
+ * 获取图片base64 
+ */
 async function getBase64Async(src) {
 
     return new Promise((resolve, reject) => {
@@ -296,9 +297,28 @@ async function getBase64Async(src) {
 
             })
             .catch(err => {
-                reject();
+                // image/webp
+
+                reject(err);
             });
     });
+}
+
+
+
+async function fetchImage(url) {
+    return new Promise((resolve, reject) => {
+
+        fetch(url, {
+            method: 'get',
+            responseType: 'arraybuffer'
+        }).then(res => {
+            return res.arrayBuffer();
+        }).then(arraybuffer => {
+            resolve(arraybuffer);
+        })
+    })
+
 }
 
 

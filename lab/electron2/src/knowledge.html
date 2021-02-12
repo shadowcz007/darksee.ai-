@@ -108,29 +108,28 @@
 
         function open() {
             let data = Db.all();
-            //console.log(data)
+            
 
             data = Array.from(data, d => [
                 d.text,
                 JSON.stringify(d.tags),
                 (new Date(d.createTime)).toISOString(),
-                d.id,
-                d.images && d.images.length > 0 ? Array.from(d.images, img => img.base64) : '',
-                d.urls && d.urls.length > 0 ? d.urls[0].url : ''
+                d.images && d.images.length > 0 ? Array.from(d.images, img => URL.createObjectURL(base64toFile(img.base64))).join(","): '',
+                d.urls && d.urls.length > 0 ? d.urls[0].url : '',
+                d.id
             ]);
+            //console.log(data)
 
-
-
-            var customColumn = {
+            const imagesColumn = {
                 createCell: (cell) => {
-                    let tags = JSON.parse(cell.innerText);
-
-                    let {
-                        div
-                    } = _createTagsInput(tags);
-                    cell.innerHTML = "";
-                    cell.appendChild(div);
-                    console.log(cell)
+                    let urls=cell.innerText.split(",");
+                    cell.innerHTML="";
+                    Array.from(urls,u=>{
+                        let img=new Image();
+                        img.src=u;
+                        cell.appendChild(img);
+                    })
+                    //console.log(cell)
                     return cell
                 },
                 // Methods
@@ -149,7 +148,68 @@
                     console.log(cell, value)
                     cell.innerHTML = value;
                 }
-            }
+            };
+
+            const tagColumn = {
+                createCell: (cell) => {
+                    let tags = JSON.parse(cell.innerText);
+                    let {
+                        div
+                    } = _createTagsInput(tags);
+                    cell.innerHTML = "";
+                    cell.appendChild(div);
+                    //console.log(cell)
+                    return cell
+                },
+                // Methods
+                closeEditor: function(cell, save) {
+                    return;
+                },
+                openEditor: function(cell) {
+                    return
+                },
+
+                getValue: function(cell) {
+                    console.log(cell)
+                    return cell.innerHTML;
+                },
+                setValue: function(cell, value) {
+                    console.log(cell, value)
+                    cell.innerHTML = value;
+                }
+            };
+
+            const idColumn = {
+                createCell: (cell) => {
+                    //console.log(cell)
+                    let id=cell.innerText;
+                    cell.innerHTML="";
+                    let button=document.createElement('button');
+                    button.innerText="update";
+                    button.addEventListener('click',e=>{
+                        console.log(id,myTable)
+                    });
+                    cell.appendChild(button)
+                    //console.log(cell)
+                    return cell
+                },
+                // Methods
+                closeEditor: function(cell, save) {
+                    return;
+                },
+                openEditor: function(cell) {
+                    return
+                },
+
+                getValue: function(cell) {
+                    console.log(cell)
+                    return cell.innerHTML;
+                },
+                setValue: function(cell, value) {
+                    console.log(cell, value)
+                    cell.innerHTML = value;
+                }
+            };
 
             var myTable = jexcel(document.getElementById('spreadsheet'), {
                 data: data,
@@ -162,26 +222,38 @@
                     stripHTML: false,
                     title: '标签',
                     width: 200,
-                    editor: customColumn
+                    editor: tagColumn
                 }, {
                     type: 'calendar',
                     title: '创建日期',
                     width: 200
                 }, {
-                    type: 'text',
-                    title: 'id',
-                    width: 120
-                }, {
-                    type: 'html',
+                    stripHTML: false,
                     title: '图片',
-                    width: 120
+                    width: 120,
+                    editor: imagesColumn
                 }, {
                     type: 'html',
                     title: '链接',
                     width: 80
+                },{
+                    stripHTML: false,
+                    title: 'id',
+                    width: 120,
+                    editor:idColumn
                 }]
             });
         }
+
+        //base64 转成 File 对象
+function base64toFile(dataurl, filename) {//将base64转换为文件
+                var arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
+                  bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+                while(n--){
+                  u8arr[n] = bstr.charCodeAt(n);
+                }
+                return new File([u8arr], filename, {type:mime});
+              }
     </script>
     <!-- <script src="./src/knowledge.js"></script> -->
 </body>

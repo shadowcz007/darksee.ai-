@@ -1,3 +1,12 @@
+/**
+ *  image={
+            title: title,
+            url:url
+        }
+
+    text
+
+ */
 class Selection {
     constructor(options) {
         this.menu = {
@@ -19,6 +28,7 @@ class Selection {
         this.left = 0;
 
         this.initIconStyle();
+        this.initImages();
         this.attachEvents();
     }
 
@@ -26,6 +36,32 @@ class Selection {
         const style = document.createElement('style');
         style.innerHTML = `.selection__icon{fill:${this.menu.iconcolor};}`;
         document.body.appendChild(style);
+    }
+
+    /**
+     * 图片的监听
+     */
+    initImages() {
+        Array.from(document.images, img => {
+            img.addEventListener("mouseover", e => {
+                e.stopPropagation();
+                img.style.outline = '1px solid yellow';
+                let url = (window.location.hostname === "mp.weixin.qq.com") ? img.getAttribute('data-src') : img.src
+                this.image = {
+                    title: img.alt + "#" + window.getSelection().toString().trim(),
+                    url: url
+                };
+            });
+            img.addEventListener("mouseout", e => {
+                e.stopPropagation();
+                img.style.outline = 'none';
+                this.image = null;
+            });
+            // img.addEventListener("click", e => {
+            //     e.stopPropagation();
+
+            // })
+        })
     }
 
     attachEvents() {
@@ -105,7 +141,7 @@ class Selection {
 
         div.appendChild(
             that.createButton(that.icon, function() {
-                if (that.menu.callback) that.menu.callback(that.text, that.selection);
+                if (that.menu.callback) that.menu.callback(that.text, that.image);
             })
         );
 

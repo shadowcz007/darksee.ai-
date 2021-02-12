@@ -72,7 +72,10 @@ class Db {
 
     all() {
         let res = [];
-        db.get(this.key).each(e => res.push(e)).value();
+        db.get(this.key)
+            .sortBy('createTime')
+            .reverse()
+            .each(e => res.push(e)).value();
         return res
     }
 
