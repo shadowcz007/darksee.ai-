@@ -87,6 +87,11 @@
             display: none;
         }
     </style>
+    <style>
+        .editor .content {
+            font-size: 14px;
+        }
+    </style>
 </head>
 
 <body>
@@ -106,30 +111,85 @@
             open();
         });
 
+        let idsMap = {};
+
         function open() {
             let data = Db.all();
-            
 
-            data = Array.from(data, d => [
-                d.text,
-                JSON.stringify(d.tags),
-                (new Date(d.createTime)).toISOString(),
-                d.images && d.images.length > 0 ? Array.from(d.images, img => URL.createObjectURL(base64toFile(img.base64))).join(","): '',
-                d.urls && d.urls.length > 0 ? d.urls[0].url : '',
-                d.id
-            ]);
+
+            data = Array.from(data, d => {
+
+                idsMap[d.id] = d;
+
+                return [
+                    JSON.stringify({
+                        text: d.text,
+                        id: d.id
+                    }),
+                    JSON.stringify({
+                        tags: d.tags,
+                        id: d.id
+                    }),
+                    //(new Date(d.createTime)).toISOString(),
+                    JSON.stringify({
+                        images: d.images && d.images.length > 0 ? Array.from(d.images, img => URL.createObjectURL(base64toFile(img.base64))) : [],
+                        id: d.id
+                    }),
+                    //d.urls && d.urls.length > 0 ? d.urls[0].url : '',
+                    d.id
+                ]
+            });
             //console.log(data)
+
+
+            const textColumn = {
+                createCell: (cell) => {
+                    let data = JSON.parse(cell.innerText);
+                    //console.log(data)
+                    let text = document.createElement('div');
+                    text.style.textAlign = 'left';
+                    text.innerText = data.text;
+                    cell.innerHTML = "";
+                    cell.appendChild(text);
+                    cell.setAttribute('data-id', data.id);
+                    return cell
+                },
+                // Methods
+                closeEditor: function(cell, save) {
+                    cell.children[0].removeAttribute("contenteditable");
+                    idsMap[cell.getAttribute('data-id')].text = cell.innerText;
+                    return cell.innerText;
+                },
+                openEditor: function(cell) {
+                    cell.children[0].setAttribute("contenteditable", true);
+                    cell.children[0].focus();
+                    return cell
+                },
+                getValue: function(cell) {
+                    //console.log('getValue', cell)
+                    return cell.innerHTML;
+                },
+                setValue: function(cell, value) {
+                    //console.log(cell, value)
+                    cell.innerHTML = value;
+                }
+            };
 
             const imagesColumn = {
                 createCell: (cell) => {
-                    let urls=cell.innerText.split(",");
-                    cell.innerHTML="";
-                    Array.from(urls,u=>{
-                        let img=new Image();
-                        img.src=u;
-                        cell.appendChild(img);
-                    })
-                    //console.log(cell)
+
+                    let data = JSON.parse(cell.innerText);
+                    cell.setAttribute('data-id', data.id);
+
+                    let images = data.images;
+
+                    cell.innerHTML = "";
+                    Array.from(images, u => {
+                            let img = new Image();
+                            img.src = u;
+                            cell.appendChild(img);
+                        })
+                        //console.log(cell)
                     return cell
                 },
                 // Methods
@@ -152,12 +212,26 @@
 
             const tagColumn = {
                 createCell: (cell) => {
-                    let tags = JSON.parse(cell.innerText);
+
+                    let data = JSON.parse(cell.innerText);
+                    cell.setAttribute('data-id', data.id);
+
+                    let tags = data.tags;
                     let {
                         div
-                    } = _createTagsInput(tags);
+                    } = _createTagsInput(tags, onChangeFn);
                     cell.innerHTML = "";
                     cell.appendChild(div);
+
+                    function onChangeFn(e) {
+                        let ntags = JSON.parse(e.value);
+                        idsMap[cell.getAttribute('data-id')].tags = Array.from(ntags, t => {
+                            return {
+                                value: t.value,
+                                type: !t.color || t.color == 'blue' ? 0 : 1
+                            }
+                        });
+                    }
                     //console.log(cell)
                     return cell
                 },
@@ -182,15 +256,15 @@
             const idColumn = {
                 createCell: (cell) => {
                     //console.log(cell)
-                    let id=cell.innerText;
-                    cell.innerHTML="";
-                    let button=document.createElement('button');
-                    button.innerText="update";
-                    button.addEventListener('click',e=>{
-                        console.log(id,myTable)
+                    let id = cell.innerText;
+                    cell.innerHTML = "";
+                    let button = document.createElement('button');
+                    button.innerText = "update";
+                    button.addEventListener('click', e => {
+                        console.log(id, idsMap)
                     });
                     cell.appendChild(button)
-                    //console.log(cell)
+                        //console.log(cell)
                     return cell
                 },
                 // Methods
@@ -214,46 +288,57 @@
             var myTable = jexcel(document.getElementById('spreadsheet'), {
                 data: data,
                 columns: [{
-                    type: 'text',
-                    title: '正文',
-                    width: 320
-                }, {
-                    //type: 'html',
-                    stripHTML: false,
-                    title: '标签',
-                    width: 200,
-                    editor: tagColumn
-                }, {
-                    type: 'calendar',
-                    title: '创建日期',
-                    width: 200
-                }, {
-                    stripHTML: false,
-                    title: '图片',
-                    width: 120,
-                    editor: imagesColumn
-                }, {
-                    type: 'html',
-                    title: '链接',
-                    width: 80
-                },{
-                    stripHTML: false,
-                    title: 'id',
-                    width: 120,
-                    editor:idColumn
-                }]
+                        stripHTML: false,
+                        title: '正文',
+                        width: 320,
+                        editor: textColumn
+                    }, {
+                        //type: 'html',
+                        stripHTML: false,
+                        title: '标签',
+                        width: 200,
+                        editor: tagColumn
+                    },
+                    /*{
+                        type: 'calendar',
+                        title: '创建日期',
+                        width: 200
+                    },*/
+                    {
+                        stripHTML: false,
+                        title: '图片',
+                        width: 120,
+                        editor: imagesColumn
+                    },
+                    /*{
+                        type: 'html',
+                        title: '链接',
+                        width: 80
+                    },*/
+                    {
+                        stripHTML: false,
+                        title: 'id',
+                        width: 120,
+                        editor: idColumn
+                    }
+                ]
             });
         }
 
         //base64 转成 File 对象
-function base64toFile(dataurl, filename) {//将base64转换为文件
-                var arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
-                  bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
-                while(n--){
-                  u8arr[n] = bstr.charCodeAt(n);
-                }
-                return new File([u8arr], filename, {type:mime});
-              }
+        function base64toFile(dataurl, filename) { //将base64转换为文件
+            var arr = dataurl.split(','),
+                mime = arr[0].match(/:(.*?);/)[1],
+                bstr = atob(arr[1]),
+                n = bstr.length,
+                u8arr = new Uint8Array(n);
+            while (n--) {
+                u8arr[n] = bstr.charCodeAt(n);
+            }
+            return new File([u8arr], filename, {
+                type: mime
+            });
+        }
     </script>
     <!-- <script src="./src/knowledge.js"></script> -->
 </body>

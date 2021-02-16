@@ -106,7 +106,8 @@ function createWindow(opts, workAreaSize) {
             //开启AI功能
             experimentalFeatures: true,
             //开启渲染进程调用remote
-            enableRemoteModule: true
+            enableRemoteModule: true,
+            webviewTag: true,
         }
     });
 
@@ -164,18 +165,18 @@ function openUrl(url) {
         clipboard.clear();
     };
 
-    if (isUrl(url) && url === global._WINS.spiderWindow.getURL()) {
-        let isOpen = dialog.showMessageBoxSync(global._WINS.mainWindow, {
-            type: "question",
-            message: "是否打开网站\n" + url,
-            buttons: ["是", "否"]
-        });
-        if (isOpen === 0) {
-            global._WINS.spiderWindow.show();
-            global._WINS.mainWindow.hide();
-        }
+    // if (isUrl(url) && url === global._WINS.spiderWindow.getURL()) {
+    //     let isOpen = dialog.showMessageBoxSync(global._WINS.mainWindow, {
+    //         type: "question",
+    //         message: "是否打开网站\n" + url,
+    //         buttons: ["是", "否"]
+    //     });
+    //     if (isOpen === 0) {
+    //         global._WINS.spiderWindow.show();
+    //         global._WINS.mainWindow.hide();
+    //     }
 
-    }
+    // }
 
 }
 
@@ -358,6 +359,8 @@ function openFile() {
         if (result.filePaths.length > 0) {
             const workAreaSize = screen.getPrimaryDisplay().workAreaSize;
             let opts = Object.assign(config.readWindow, {
+                width: workAreaSize.width,
+                height: workAreaSize.height,
                 html: _READ_HTML,
                 show: true,
                 executeJavaScript: `loadDoc('${result.filePaths[0]}');`

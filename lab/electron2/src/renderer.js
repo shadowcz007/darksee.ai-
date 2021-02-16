@@ -26,47 +26,51 @@ window.search = search;
 
 document.getElementById("info").innerText = `知识卡数量${Db.size()}`;
 
-//相似度排序
-async function bertSimilar(arg) {
-    const { target, texts } = arg;
 
-    let res = await bert.textsRank(target, Array.from(texts, t => t.text));
-    let newTexts = [];
-    // console.log(res)
-    Array.from(res, r => {
-        // console.log(r, texts)
-        newTexts.push({
-            text: texts[r.index].text,
-            id: texts[r.index].id,
-            score: r.score
-        })
-    });
-    return newTexts
-        //spiderWindow.webContents.send('bert-similar-reply', { result: newTexts });
+/**
+ * 知识模型
+ */
+class KnowledgeModel {
+    //相似度排序
+    async bertSimilar(arg) {
+        const { target, texts } = arg;
+
+        let res = await bert.textsRank(target, Array.from(texts, t => t.text));
+        let newTexts = [];
+        // console.log(res)
+        Array.from(res, r => {
+            // console.log(r, texts)
+            newTexts.push({
+                text: texts[r.index].text,
+                id: texts[r.index].id,
+                score: r.score
+            })
+        });
+        return newTexts
+            //spiderWindow.webContents.send('bert-similar-reply', { result: newTexts });
+    }
+
+    //提前预测
+    bertInit(text) {
+        bert.predictAndStore(text);
+    }
+
+    //训练打标模型
+    async trainTextAutoTags(dataset) {
+        if (!dataset) return
+            //自动更新到本地
+        this.model = await textTrain.start(dataset, _MODEL_AUTOTAGS)
+    };
+
+    //自动打标
+    async autoTags(text) {
+        let res = await autoTagsModel.predict(text, 8);
+        return res
+    };
 }
-//提前预测
-function bertInit(arg) {
-    //console.log(arg) // 
-    const { text } = arg;
-    bert.predictAndStore(text);
-}
 
+const kmodel = new KnowledgeModel();
 
-
-//训练打标模型
-async function trainTextAutoTags(arg) {
-    let dataset = arg.dataset;
-    let model = await textTrain.start(dataset, _MODEL_AUTOTAGS)
-    mainWindow.webContents.send('train-text-auto-tags-result', { model: model });
-};
-
-
-//自动打标
-async function autoTags(arg) {
-    //console.log(arg)
-    let res = await autoTagsModel.predict(arg.text);
-    // event.send
-};
 
 const EditorJS = require('@editorjs/editorjs');
 const Paragraph = require('@editorjs/paragraph');
@@ -182,17 +186,14 @@ class Knowledge {
             //         isTargetHostNames[from] = 2;
             //     }
             //     isTargetHostNames[from]++;
-            autoTagsModel.predict(text).then((predictTags) => {
-                // console.log(predictTags)
+            kmodel.autoTags(text).then((predictTags) => {
                 data.tags.push({
                     value: predictTags,
                     type: 1
                 });
-                // };
-                // if (!isTargetHostNames[from]) return;
+
                 this.knowledgeCardDataset[data.id] = data;
-                //data.vector = bert.predictAndStore(text);
-                // let tags = ['t1', 't2']
+
                 //存储到数据库
                 Db.add(data);
                 if ((Object.keys(this.knowledgeCardDataset)).length % 100 === 0) Db.export();
@@ -261,11 +262,7 @@ ipcRenderer.on('save-knowledge', (event, arg) => {
 //     })
 // });
 
-ipcRenderer.on('train-text-auto-tags-result', (event, arg) => {
-    // editor.blocks.insert("paragraph", arg.data);
-    //editor.blocks.insert('knowledgeCard', arg.data);
-    console.log(arg)
-});
+
 window._test = function(text) {
         ipcRenderer.send('test', { text: text });
     }
@@ -413,7 +410,8 @@ class GUI {
                 })
             })
             console.log(dataset)
-                // ipcRenderer.send('train-text-auto-tags', { dataset: dataset });
+            kmodel.trainTextAutoTags(dataset);
+            // ipcRenderer.send('train-text-auto-tags', { dataset: dataset });
         }
         //保存知识卡
     saveKnowledgeCard() {

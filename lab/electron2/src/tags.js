@@ -1,6 +1,7 @@
 const Tagify = require("@yaireo/tagify");
 
-function _createTagsInput(tagsObj) {
+function _createTagsInput(tagsObj, onChangeFn) {
+
     let div = document.createElement("div");
     div.className = "tags";
 
@@ -16,6 +17,7 @@ function _createTagsInput(tagsObj) {
     let tagify = new Tagify(input, {
         callbacks: {
             "invalid": onInvalidTag,
+            "change": onChange
         },
         dropdown: {
             position: 'text',
@@ -43,6 +45,14 @@ function _createTagsInput(tagsObj) {
         console.log("invalid", e.detail)
     }
 
+
+
+    function onChange(e) {
+        console.log("onChange", e.detail)
+        if (onChangeFn) onChangeFn(e.detail);
+    };
+
+    //input.addEventListener('change', onChange);
     return {
         div,
         tagify

@@ -19,7 +19,7 @@
         }
         
         #pageContainer {
-            width: 50%;
+            width: 100%;
         }
         
         #btns {
@@ -33,13 +33,7 @@
         
         #my-note {
             width: 100%;
-            background-color: #eee;
-            outline: none;
-            /* position: fixed; */
-            padding: 24px;
-            /* top: 0; */
-            /* right: 0; */
-            overflow-y: scroll;
+            height: 100vh;
         }
         
         .note-text {
@@ -60,8 +54,17 @@
             justify-content: center;
         }
         
+        .canvasWrapper {
+            opacity: 0.2;
+        }
+        
         .textLayer {
             opacity: 1!important;
+        }
+        
+        .textLayer>span {
+            color: black!important;
+            outline: 1px solid red;
         }
         
         .textLayer ::selection {
@@ -84,18 +87,14 @@
             <div id="viewer" class="pdfViewer"></div>
         </div>
 
-        <div style="height: 100vh;">
-            <div id="my-note-en" style="height: 50vh;
-            /* width: 100%; */
-            background: #e4e4e4;
-            /* padding: 24px; */
-            overflow: scroll;">
-
-            </div>
-
-            <iframe src="./googleTranslate.html" style="outline: none;
-            border: none;" id="my-note"></iframe>
-        </div>
+        <!-- <div style="height: 100vh;
+            position: fixed;
+            top: 0;
+            right: 0;
+            width:50%;">
+            <webview src="./googleTranslate.html" style="outline: none;
+            border: none;" id="my-note" nodeintegration></webview>
+        </div> -->
 
 
 
@@ -293,6 +292,18 @@
                 localStorage.setItem("pdfDocument", filePath);
                 pdfViewer.setDocument(pdfDocument);
                 pdfLinkService.setDocument(pdfDocument, null);
+
+                /*let wv = document.querySelector("#my-note");
+                if (!window.location.href.match('child=1')) {
+                    const {
+                        remote
+                    } = require('electron');
+
+                    if (wv.isLoading() === false) {
+                        wv.executeJavaScript(`loadDoc('${filePath}')`);
+                    };
+                };*/
+
             });
         };
 
@@ -346,9 +357,15 @@
                 // console.log(isDb,selection.toString(),selection.anchorNode.parentElement);
                 document.querySelector("#my-note").contentWindow.postMessage(`note_ms_${text}`);
             }
-
-
         };
+
+        window.addEventListener('message', e => {
+            let data = e.data;
+            if (data) {
+                document.querySelector("#my-note-en").innerText = `
+                ${data.prevValue}\n${data.newValue}`;
+            }
+        });
 
         let isStart = false;
         document.querySelector("#viewer").addEventListener("click", () => {
@@ -370,7 +387,17 @@
         setTimeout(() => {
             let pdfDocument = localStorage.getItem("pdfDocument");
             if (!!pdfDocument) loadDoc(pdfDocument);
-        }, 1000)
+        }, 1000);
+
+        function googleTranslateElementInit() {
+            //console.log("-----")
+            window.g = new google.translate.TranslateElement({
+                    pageLanguage: 'en',
+                    layout: google.translate.TranslateElement.InlineLayout.Cj
+                },
+                'pageContainer');
+
+        };
     </script>
 
 </body>

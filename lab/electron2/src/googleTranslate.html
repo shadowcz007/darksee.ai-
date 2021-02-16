@@ -4,96 +4,209 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>READ</title>
+
+    <link rel="stylesheet" href="../node_modules/pdfjs-dist/web/pdf_viewer.css">
+
+    <!-- <meta name="google-translate-customization" content="9f841e7780177523-3214ceb76f765f38-gc38c6fe6f9d06436-c"></meta> -->
     <script type="text/javascript" src="https://translate.google.cn/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
     <style>
-        .skiptranslate {
-            display: none!important
+        main {
+            width: 100%;
+            display: flex;
+            overflow: hidden;
         }
         
-        iframe {
-            display: none!important
-        }
-        /*.goog-te-spinner-pos {
-            display: none!important
+        #pageContainer {
+            width: 100%;
         }
         
-        #goog-gt-tt {
-            display: none!important
-        }*/
+        #btns {
+            position: fixed;
+            bottom: 18px;
+            z-index: 9999;
+            width: 50%;
+            text-align: center;
+            left: 0;
+        }
+      
+       
+        #viewer {
+            outline: none;
+            width: 100%;
+            overflow: scroll;
+        }
+        
+        .pdf-pages {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .canvasWrapper{
+            display:none
+        }
+        .textLayer {
+            opacity: 1!important;
+        }
+        .textLayer > span {
+          color: black!important;
+        }
+        .textLayer ::selection {
+            background: rgb(31 232 255 / 21%)!important;
+        }
+        
+        .goog-te-combo {
+            outline: none;
+        }
     </style>
 </head>
 
-<body style="margin: 0;
-padding: 0;">
-
-    <main id="my-note" contenteditable style="height: 100vh;
-    /* width: 100%; */
-    background: #e4e4e4;
-    padding: 24px;">
+<body>
+    <main>
+        <div id="btns">
+            <button id="zoomIn">+</button>
+            <button id="zoomOut">-</button>
+        </div>
+        <div id="pageContainer">
+            <div id="viewer" class="pdfViewer"></div>
+        </div>
 
     </main>
+
     <script type="text/javascript">
+        const path = require('path');
+        const hash = require('object-hash');
+        const pdfjsLib = require("pdfjs-dist");
+      
+        var CMAP_URL = path.join(__dirname, "../node_modules/pdfjs-dist/cmaps/");
+        var CMAP_PACKED = true;
+
+        pdfjsLib.GlobalWorkerOptions.workerSrc = path.join(__dirname, "../node_modules/pdfjs-dist/build/pdf.worker.js");
+
+        var DEFAULT_SCALE_DELTA = 1.1;
+        var MIN_SCALE = 0.25;
+        var MAX_SCALE = 10.0;
+
+        const pdfjsViewer = require("pdfjs-dist/web/pdf_viewer");
+        var eventBus = new pdfjsViewer.EventBus();
+
+        // (Optionally) enable hyperlinks within PDF files.
+        var pdfLinkService = new pdfjsViewer.PDFLinkService({
+            eventBus,
+        });
+        var container = document.getElementById("pageContainer");
+        var pdfViewer = new pdfjsViewer.PDFViewer({
+            container,
+            eventBus,
+            linkService: pdfLinkService,
+            textLayerMode: 1,
+        });
+        pdfLinkService.setViewer(pdfViewer);
+
+        eventBus.on("pagesinit", function() {
+            pdfViewer.currentScaleValue = "page-width";
+        });
+
+        // Loading document.
+        function loadDoc(filePath) {
+            var loadingTask = pdfjsLib.getDocument({
+                url: filePath,
+                cMapUrl: CMAP_URL,
+                cMapPacked: CMAP_PACKED,
+            });
+            loadingTask.promise.then(function(pdfDocument) {
+                localStorage.setItem("pdfDocument", filePath);
+                pdfViewer.setDocument(pdfDocument);
+                pdfLinkService.setDocument(pdfDocument, null);
+                googleTranslateElementInit();
+            });
+        };
+
+        document.getElementById("zoomIn").addEventListener("click", function() {
+            zoomIn();
+        });
+
+        document.getElementById("zoomOut").addEventListener("click", function() {
+            zoomOut();
+        });
+
+        function zoomIn(ticks) {
+            var newScale = pdfViewer.currentScale;
+            do {
+                newScale = (newScale * DEFAULT_SCALE_DELTA).toFixed(2);
+                newScale = Math.ceil(newScale * 10) / 10;
+                newScale = Math.min(MAX_SCALE, newScale);
+            } while (--ticks && newScale < MAX_SCALE);
+            pdfViewer.currentScaleValue = newScale;
+        };
+
+        function zoomOut(ticks) {
+            var newScale = pdfViewer.currentScale;
+            do {
+                newScale = (newScale / DEFAULT_SCALE_DELTA).toFixed(2);
+                newScale = Math.floor(newScale * 10) / 10;
+                newScale = Math.max(MIN_SCALE, newScale);
+            } while (--ticks && newScale > MIN_SCALE);
+            pdfViewer.currentScaleValue = newScale;
+        };
+
+
+      
+
+        //屏幕取词
+        function getSelectionWords(isDb) {
+            var selection = document.getSelection();
+            if (selection.toString() === '') return;
+
+            let text = selection.toString();
+            if (isDb) {
+                let textLayer = selection.anchorNode.parentElement;
+                text = textLayer.innerText;
+            };
+
+            let id = hash([text]);
+            if (window.preTextId !== id) {
+                window.preTextId = id;
+
+                document.querySelector("#my-note-en").innerText = text;
+                // console.log(isDb,selection.toString(),selection.anchorNode.parentElement);
+                document.querySelector("#my-note").contentWindow.postMessage(`note_ms_${text}`);
+            }
+        };
+
+        let isStart = false;
+        document.querySelector("#viewer").addEventListener("click", () => {
+            isStart = true;
+        }, false);
+        document.querySelector("#viewer").addEventListener("mousemove", () => {
+            if (isStart) getSelectionWords(false);
+        });
+        document.querySelector("#viewer").addEventListener("mouseup", () => {
+            isStart = false;
+        });
+
+        document.querySelector("#viewer").addEventListener("dblclick", () => {
+            getSelectionWords(true)
+        }, false);
+
+
+
+        setTimeout(() => {
+            let pdfDocument = localStorage.getItem("pdfDocument");
+            if (!!pdfDocument) loadDoc(pdfDocument);
+        }, 1000);
+
         function googleTranslateElementInit() {
             //console.log("-----")
             window.g = new google.translate.TranslateElement({
                     pageLanguage: 'en',
                     layout: google.translate.TranslateElement.InlineLayout.Cj
                 },
-                'my-note');
-
+                'pageContainer');
         };
-
-        document.querySelector('#my-note').addEventListener('change', e => {
-            console.log(document.querySelector('#my-note').innerHTML)
-        });
-
-        let iframe;
-
-        window.addEventListener('message', function(event) {
-            //console.log(iframe)
-            //autoOn();
-            iframe = iframe || Array.from(document.querySelectorAll("iframe"), f => f).filter(f => f.className.match('goog-te-banner-frame'))[0];
-            if (iframe) Array.from(iframe.contentDocument.images, img => img.remove());
-            let data = event.data.split("_ms_");
-            autoOn();
-            if (data[0] === "note") {
-                let text = document.createElement('p');
-                text.innerText = data[1].trim();
-                text.className = 'note-text';
-
-                Array.from(document.querySelectorAll("#my-note .note-text"), t => t.remove());
-                document.querySelector("#my-note").appendChild(text);
-
-
-
-            } else if (data[0] === "on" && iframe) {
-
-                //翻译开启 
-                Array.from(iframe.contentDocument.querySelectorAll('.goog-te-button button'), b => b).filter(b => b.id.match('confirm'))[0].click()
-
-            } else if (data[0] === "off" && iframe) {
-                //翻译 关闭
-                Array.from(iframe.contentDocument.querySelectorAll('.goog-te-button button'), b => b).filter(b => b.id.match('cancel'))[0].click()
-            }
-
-        });
-
-        function autoOn() {
-
-            iframe = iframe || Array.from(document.querySelectorAll("iframe"), f => f).filter(f => f.className.match('goog-te-banner-frame'))[0];
-            //if (iframe) Array.from(iframe.contentDocument.images, img => img.remove());
-            //if (!iframe) setTimeout(autoOn, 1000);
-            let btn = Array.from(iframe.contentDocument.querySelectorAll('.goog-te-button button'), b => b).filter(b => b.id.match('confirm'))[0];
-            if (btn) {
-                //btn.setAttribute
-                btn.click();
-                console.log("----click-00000-----")
-            }
-        };
-
-        //autoOn();
     </script>
+
 </body>
 
 </html>

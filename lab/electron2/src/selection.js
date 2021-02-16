@@ -106,7 +106,13 @@ class Selection {
         tooltip.style.top = `${this.top}px`;
         tooltip.style.left = `${this.left}px`;
     }
-
+    getTooltipPosition() {
+        this.setTooltipPosition();
+        return {
+            top: this.top,
+            left: this.left
+        }
+    }
     setTooltipPosition() {
         const position = this.selection.getRangeAt(0).getBoundingClientRect();
         const DOCUMENT_SCROLL_TOP =
