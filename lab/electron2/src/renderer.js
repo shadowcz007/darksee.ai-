@@ -446,3 +446,37 @@ class GUI {
 }
 
 const gui = new GUI();
+
+
+const Hapi = require('@hapi/hapi');
+const Inert = require('@hapi/inert');
+const init = async() => {
+
+    const server = new Hapi.Server({
+        port: 3000,
+        routes: {
+            files: {
+                relativeTo: path.join(__dirname, 'src')
+            }
+        }
+    });
+
+    await server.register(Inert);
+
+    server.route({
+        method: 'GET',
+        path: '/{param*}',
+        handler: {
+            directory: {
+                path: '.',
+                redirectToSlash: true
+            }
+        }
+    });
+
+    await server.start();
+
+    console.log('Server running at:', server.info.uri);
+};
+
+init();

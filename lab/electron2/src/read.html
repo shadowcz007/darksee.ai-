@@ -6,10 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>READ</title>
 
-    <link rel="stylesheet" href="../node_modules/pdfjs-dist/web/pdf_viewer.css">
+    <!-- <link rel="stylesheet" href="../node_modules/pdfjs-dist/web/pdf_viewer.css"> -->
 
     <!-- <meta name="google-translate-customization" content="9f841e7780177523-3214ceb76f765f38-gc38c6fe6f9d06436-c"></meta> -->
-    <script type="text/javascript" src="https://translate.google.cn/translate_a/element.js?cb=googleTranslateElementInit"></script>
 
     <style>
         main {
@@ -82,6 +81,7 @@
         <div id="btns">
             <button id="zoomIn">+</button>
             <button id="zoomOut">-</button>
+            <input type="file" id="upload">
         </div>
         <div id="pageContainer">
             <div id="viewer" class="pdfViewer"></div>
@@ -99,14 +99,19 @@
 
 
     </main>
+    <script type="text/javascript" src='https://cdn.jsdelivr.net/npm/pdfjs-dist@2.6.347/build/pdf.min.js'></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pdfjs-dist@2.6.347/web/pdf_viewer.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@2.6.347/web/pdf_viewer.min.js"></script>
+
 
     <script type="text/javascript">
-        const path = require('path');
-        const hash = require('object-hash');
-        const pdfjsLib = require("pdfjs-dist");
+        /*const path = require('path');
+                                                                                                                                                                        const hash = require('object-hash');
+                                                                                                                                                                        const pdfjsLib = require("pdfjs-dist");
+                                                                                                                                                                        */
         // console.log(pdfjsLib)
 
-        var CMAP_URL = path.join(__dirname, "../node_modules/pdfjs-dist/cmaps/");
+        var CMAP_URL = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@2.6.347/cmaps/78-EUC-H.bcmap'
         var CMAP_PACKED = true;
 
         //var PDF_PATH = path.join(__dirname, '../examples/Gavin Lew, Robert M. Schumacher Jr. - AI and UX_ Why Artificial Intelligence Needs User Experience (2020, Apress) - libgen.li.pdf');
@@ -114,153 +119,15 @@
         // var PAGE_SCALE = 1;
         // var SVG_NS = "http://www.w3.org/2000/svg";
 
-        pdfjsLib.GlobalWorkerOptions.workerSrc = path.join(__dirname, "../node_modules/pdfjs-dist/build/pdf.worker.js");
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@2.6.347/build/pdf.worker.min.js';
 
 
-        // console.log(pdfjsLib.GlobalWorkerOptions.workerSrc)
-        //字典，存储英中结果
-        // let textsMap={};
-        // let pdfDocument;
-        // function buildSVG(viewport, textContent) {
-        //   // Building SVG with size of the viewport (for simplicity)
-        //   var svg = document.createElementNS(SVG_NS, "svg:svg");
-        //   svg.setAttribute("width", viewport.width + "px");
-        //   svg.setAttribute("height", viewport.height + "px");
-        //   // items are transformed to have 1px font size
-        //   svg.setAttribute("font-size", 1);
-        //   svg.style.outline='1px solid gray';
-
-        //   // processing all items
-        //   textContent.items.forEach(function (textItem) {
-        //     // we have to take in account viewport transform, which includes scale,
-        //     // rotation and Y-axis flip, and not forgetting to flip text.
-        //     var tx = pdfjsLib.Util.transform(
-        //       pdfjsLib.Util.transform(viewport.transform, textItem.transform),
-        //       [1, 0, 0, -1, 0, 0]
-        //     );
-        //     var style = textContent.styles[textItem.fontName];
-        //     // adding text element
-        //     var text = document.createElementNS(SVG_NS, "svg:text");
-
-        //     text.setAttribute("transform", "matrix(" + tx.join(" ") + ")");
-        //     text.setAttribute("font-family", style.fontFamily);
-        //     text.textContent = textItem.str;
-        //     // console.log(text.outerHTML);
-        //     let id=md5(text.outerHTML);
-        //     text.setAttribute('id','_'+id);
-        //     text.setAttribute('data-text',textItem.str);
-        //     textsMap[id]={
-        //         en:textItem.str,
-        //         zh:null
-        //     };
-        //     svg.appendChild(text);
-
-        //   });
-        //   return svg;
-        // };
-
-        // function loadPdfDoc(){
-        //     return new Promise((resolve,reject)=>{
-        //         if(!pdfDocument){
-        //             // Loading document and page text content
-        //             var loadingTask = pdfjsLib.getDocument({ url: PDF_PATH });
-        //             loadingTask.promise.then(pdfDoc=> {
-        //                 pdfDocument=pdfDoc;
-        //                 resolve(pdfDocument);
-        //             });
-        //         }else{
-        //             resolve(pdfDocument);
-        //         }
-        //     });
-        // }
-
-        // function pageLoaded() {
-        //     return new Promise((resolve,reject)=>{
-        //         loadPdfDoc().then(pdfDocument=>{
-        //             let numPages=pdfDocument.numPages;
-        //             Promise.all([
-        //                 getPage(pdfDocument,PAGE_NUMBER),
-        //                 getPage(pdfDocument,PAGE_NUMBER+1)
-        //             ]).then(svgs=>{
-        //                 let div=document.createElement('div');
-        //                 div.setAttribute("contenteditable", "true");
-        //                 div.className="pdf-pages";
-        //                 Array.from(svgs,svg=>div.appendChild(svg));
-        //                 document.getElementById("pageContainer").appendChild(div);
-        //                 PAGE_NUMBER+=2;
-        //                 resolve();
-        //             }); 
-        //         });
-        //     });
-
-        // };
-
-        // function getPage(pdfDocument,pageNum){
-        //     return new Promise((resolve,reject)=>{
-        //         pdfDocument.getPage(pageNum).then(page=> {
-        //             var viewport = page.getViewport({ scale: PAGE_SCALE });
-        //             page.getTextContent().then(textContent=>{
-        //               // building SVG and adding that to the DOM
-        //               let svg = buildSVG(viewport, textContent);
-        //               resolve(svg);
-        //             });
-        //           });
-        //     })
-
-        // };
-
-        // function isTranslateDone(){
-        //     //翻译完成
-        //     let count=0;
-        //     for (const id in textsMap) {
-        //         let d=document.querySelector(`#_${id}`);
-        //         if(d && !textsMap[id].zh){
-        //             textsMap[id]={
-        //                 en:textsMap[id].en,
-        //                 zh:d.textContent
-        //             };
-        //         }else{
-        //             count++;
-        //         }
-        //     };
-
-        //     if(count>0) return setTimeout(isTranslateDone,1000); 
-
-        //     window.g.dispose();
-        //     for (const id in textsMap) {
-        //         let d=document.querySelector(`#_${id}`);
-        //         if(d){
-        //             d.textContent=textsMap[id].zh;
-        //         }
-        //     };
-        // }
-
-        // document.addEventListener("DOMContentLoaded", function () {
-        //   if (typeof pdfjsLib === "undefined") return;
-
-        //   pageLoaded().then(()=>pageLoaded());
-
-        //   //监听翻译完成的图片加载
-        //   var  xxx_filter = {
-        //     urls: ["file://translate.google.com/*"]
-        //     };
-        //     var session=require('electron').remote.session;  
-        //     session.defaultSession.webRequest.onBeforeSendHeaders(xxx_filter, (details, callback) => {
-        //         console.log(details)
-        //         if(details.url.match('file://translate.google.com/')){
-
-        //         }
-
-        //         callback(details);
-        //     });
-
-        // });
 
         var DEFAULT_SCALE_DELTA = 1.1;
         var MIN_SCALE = 0.25;
         var MAX_SCALE = 10.0;
 
-        const pdfjsViewer = require("pdfjs-dist/web/pdf_viewer");
+        //const pdfjsViewer = require("pdfjs-dist/web/pdf_viewer");
         var eventBus = new pdfjsViewer.EventBus();
 
         // (Optionally) enable hyperlinks within PDF files.
@@ -280,6 +147,14 @@
             pdfViewer.currentScaleValue = "page-width";
         });
 
+
+        document.querySelector('#upload').addEventListener('change', e => {
+
+            let url = URL.createObjectURL(e.target.files[0]);
+            console.log(url);
+            loadDoc(url);
+        })
+
         // Loading document.
         function loadDoc(filePath) {
 
@@ -289,7 +164,7 @@
                 cMapPacked: CMAP_PACKED,
             });
             loadingTask.promise.then(function(pdfDocument) {
-                localStorage.setItem("pdfDocument", filePath);
+                //localStorage.setItem("pdfDocument", pdfDocument);
                 pdfViewer.setDocument(pdfDocument);
                 pdfLinkService.setDocument(pdfDocument, null);
 
@@ -384,20 +259,15 @@
 
 
 
-        setTimeout(() => {
-            let pdfDocument = localStorage.getItem("pdfDocument");
-            if (!!pdfDocument) loadDoc(pdfDocument);
-        }, 1000);
-
-        function googleTranslateElementInit() {
-            //console.log("-----")
-            window.g = new google.translate.TranslateElement({
-                    pageLanguage: 'en',
-                    layout: google.translate.TranslateElement.InlineLayout.Cj
-                },
-                'pageContainer');
-
-        };
+        /* setTimeout(() => {
+             let pdfDocument = localStorage.getItem("pdfDocument");
+             if (!!pdfDocument) {
+                 pdfDocument = JSON.parse(pdfDocument);
+                 pdfViewer.setDocument(pdfDocument);
+                 pdfLinkService.setDocument(pdfDocument, null);
+             };
+         }, 1000);
+         */
     </script>
 
 </body>
